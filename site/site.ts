@@ -63,7 +63,7 @@ export const SITE = {
    */
   interfaceVersion: "1.0.0",
   /** 对外联系邮箱（选填）：llms.txt 和给 Agent 的使用说明里会写。 */
-  contactEmail: null as string | null,
+  contactEmail: "1213709788@qq.com",
   /** 关于页底部的一行小字（选填）。 */
   footerNote: "由 AIHOT 开源框架驱动",
   /** 中国大陆网站的 ICP 备案号（选填），填了就显示在侧栏底部和“我的”页底部，并链接到工信部备案系统。 */

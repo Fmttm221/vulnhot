@@ -23,6 +23,42 @@ const HOST = process.env.WEB_HOST || "127.0.0.1";
 const TRUST_PROXY = process.env.TRUST_PROXY === "true";
 const CLIENT_DIR = path.resolve(import.meta.dirname, "build/client");
 
+/**
+ * 站点的响应头策略，每个响应都带上（页面、静态文件、接口代理、重定向）。
+ *
+ * - CSP：脚本只能来自本站或内联（页头那两段首帧前执行的主题脚本是内联的）；样式同理（Tailwind 与
+ *   额外配色用内联 style）；图片允许任意 https 源（正文插图与图片代理）；不允许被任何站点嵌入。
+ * - HSTS 只在站点以 https 提供服务时发送：现在是 http（手机 + 隧道还没上），提前发会把浏览器钉死
+ *   在一个它服不了的协议上。
+ */
+const SECURITY_HEADERS: Record<string, string> = {
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "media-src 'self' https:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+  ].join("; "),
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  ...(process.env.SITE_URL?.startsWith("https://")
+    ? { "Strict-Transport-Security": "max-age=31536000; includeSubDomains" }
+    : {}),
+};
+
+function applySecurityHeaders(res: import("node:http").ServerResponse): void {
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) res.setHeader(name, value);
+}
+
 const TYPES: Record<string, string> = {
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -138,6 +174,7 @@ function pageResponse(req: import("node:http").IncomingMessage, res: import("nod
 }
 
 async function handle(req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) {
+  applySecurityHeaders(res);
   const raw = req.url ?? "/";
   const qi = raw.indexOf("?");
   const pathname = qi >= 0 ? raw.slice(0, qi) : raw;

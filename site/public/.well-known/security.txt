@@ -1,0 +1,8 @@
+Contact: mailto:1213709788@qq.com
+Contact: https://vulnhot.com/feedback
+Expires: 2027-10-21T00:00:00.000Z
+Preferred-Languages: zh-CN, en
+Canonical: https://vulnhot.com/.well-known/security.txt
+Policy: https://vulnhot.com/terms
+# 本站只做公开漏洞情报的聚合与摘要，不托管、不分发可执行利用代码。
+# 如果你是来源方，希望更正或下架，也请用上面的地址联系。

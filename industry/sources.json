@@ -1,196 +1,1803 @@
 {
-  "$comment": "示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖。之后在后台“信源”里新建、修改和暂停。字段说明见 docs/customize.md。",
+  "$comment": "VulnHOT 示范信源：首次启动时导入（scripts/seed.ts），已存在的不会被覆盖。之后在后台“信源”里新建、修改和暂停。字段说明见 docs/customize.md。",
   "sources": [
     {
-      "id": "rss-openai-news",
-      "name": "OpenAI News",
-      "kind": "rss",
+      "id": "json-cisa-kev",
+      "name": "CISA 已知被利用漏洞目录 (KEV)",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://openai.com/news/rss.xml",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
+        "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
+        "mode": "json_api",
+        "itemsPath": "vulnerabilities",
+        "titlePaths": [
+          "vulnerabilityName"
+        ],
+        "urlTemplate": "https://nvd.nist.gov/vuln/detail/{cveID}",
+        "summaryPaths": [
+          "shortDescription"
+        ],
+        "publishedAtPath": "dateAdded",
+        "externalIdPath": "cveID",
+        "summaryIsBody": true
       },
       "tier": "T1",
-      "owner_entity_id": "openai",
+      "owner_entity_id": "cisa",
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 60,
       "tags": [
-        "官方"
+        "kev",
+        "exploited",
+        "cisa"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-google-deepmind",
-      "name": "Google DeepMind",
-      "kind": "rss",
+      "id": "json-ghsa",
+      "name": "GitHub 安全公告库 (GHSA)",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://deepmind.google/blog/rss.xml",
+        "url": "https://api.github.com/advisories?per_page=100&sort=updated&direction=desc",
+        "mode": "json_api",
+        "titlePaths": [
+          "summary"
+        ],
+        "urlTemplate": "{raw:html_url}",
+        "summaryPaths": [
+          "description"
+        ],
+        "publishedAtPath": "published_at",
+        "externalIdPath": "ghsa_id",
         "_aihot": {
           "initialBackfillLimit": 8
-        }
+        },
+        "summaryIsBody": true
       },
       "tier": "T1",
-      "owner_entity_id": "google",
+      "owner_entity_id": "github",
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 30,
       "tags": [
-        "官方"
+        "ghsa",
+        "github",
+        "opensource"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-google-research",
-      "name": "Google Research",
-      "kind": "rss",
+      "id": "json-redhat-cve",
+      "name": "Red Hat CVE 数据库",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://research.google/blog/rss/",
+        "url": "https://access.redhat.com/hydra/rest/securitydata/cve.json?per_page=100",
+        "mode": "json_api",
+        "titlePaths": [
+          "bugzilla_description"
+        ],
+        "urlTemplate": "https://access.redhat.com/security/cve/{CVE}",
+        "summaryPaths": [
+          "bugzilla_description"
+        ],
+        "publishedAtPath": "public_date",
+        "externalIdPath": "CVE",
         "_aihot": {
           "initialBackfillLimit": 8
-        }
+        },
+        "summaryIsBody": true
       },
       "tier": "T1",
-      "owner_entity_id": "google",
+      "owner_entity_id": "redhat",
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 180,
       "tags": [
-        "官方",
-        "研究"
+        "redhat",
+        "rhel",
+        "distro"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-hugging-face",
-      "name": "Hugging Face Blog",
+      "id": "rss-debian-dsa",
+      "name": "Debian 安全公告 (DSA)",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://huggingface.co/blog/feed.xml",
+        "feedUrl": "https://www.debian.org/security/dsa.rdf",
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
       "tier": "T1",
-      "owner_entity_id": "hugging-face",
+      "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 180,
       "tags": [
-        "官方",
-        "开源"
+        "debian",
+        "linux",
+        "distro"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-microsoft-research",
-      "name": "Microsoft Research",
+      "id": "rss-drupal-security",
+      "name": "Drupal 安全公告",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://www.microsoft.com/en-us/research/feed/",
+        "feedUrl": "https://www.drupal.org/security/rss.xml",
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
       "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "drupal",
+        "cms"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-fortinet-psirt",
+      "name": "Fortinet PSIRT 公告",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.fortiguard.com/rss/ir.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "fortinet",
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "fortinet",
+        "firewall",
+        "edge"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-github-blog-security",
+      "name": "GitHub 安全博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://github.blog/security/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "github",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "github",
+        "supplychain"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-ivanti-security",
+      "name": "Ivanti 安全公告",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.ivanti.com/blog/rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "ivanti",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "ivanti",
+        "vpn",
+        "edge"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-jenkins-advisories",
+      "name": "Jenkins 安全公告",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.jenkins.io/security/advisories/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "jenkins",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "jenkins",
+        "ci"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-kubernetes-security",
+      "name": "Kubernetes 安全公告",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://kubernetes.io/feed.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "kubernetes",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "kubernetes",
+        "cloudnative"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-mozilla-advisories",
+      "name": "Mozilla 安全博客 (MFSA)",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.mozilla.org/security/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "mozilla",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "firefox",
+        "mozilla"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-php-releases",
+      "name": "PHP 版本与安全修复",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.php.net/feed.atom",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "php",
+        "language"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-ubuntu-usn",
+      "name": "Ubuntu 安全公告 (USN)",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://ubuntu.com/security/notices/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "ubuntu",
+        "linux",
+        "distro"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-wordpress-patchstack",
+      "name": "Patchstack WordPress 漏洞库",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://patchstack.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "wordpress",
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "wordpress",
+        "cms",
+        "plugin"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-apple-security",
+      "name": "Apple 安全更新",
+      "kind": "web_list",
+      "config": {
+        "url": "https://support.apple.com/en-us/100100",
+        "parseMode": "html",
+        "itemSelector": "table tbody tr",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        },
+        "allowUrlPrefixes": [
+          "https://support.apple.com"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": "apple",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "apple",
+        "ios",
+        "macos"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-nginx-advisories",
+      "name": "nginx 安全公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://nginx.org/en/security_advisories.html",
+        "parseMode": "html",
+        "itemSelector": "#content > ul > li",
+        "linkSelector": "a",
+        "titleSelector": "li",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1",
+      "owner_entity_id": "nginx",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "nginx",
+        "webserver"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-openssl-advisories",
+      "name": "OpenSSL 安全公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://openssl-library.org/news/vulnerabilities/index.html",
+        "parseMode": "html",
+        "itemSelector": "main ul li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        },
+        "allowUrlPrefixes": [
+          "https://openssl-library.org"
+        ]
+      },
+      "tier": "T1",
+      "owner_entity_id": "openssl",
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "openssl",
+        "crypto",
+        "tls"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-assetnote",
+      "name": "Assetnote 研究",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.assetnote.io/feed.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "research",
+        "edge"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-checkpoint-research",
+      "name": "Check Point Research",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://research.checkpoint.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "malware",
+        "apt"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-cve-mitre-recent",
+      "name": "MITRE CVE 记录 (cvelistV5)",
+      "kind": "json_list",
+      "config": {
+        "url": "https://api.github.com/repos/CVEProject/cvelistV5/commits?per_page=30",
+        "mode": "json_api",
+        "titlePaths": [
+          "commit.message"
+        ],
+        "summaryPaths": [
+          "commit.message"
+        ],
+        "summaryIsBody": true,
+        "urlTemplate": "{raw:html_url}",
+        "publishedAtPath": "commit.committer.date",
+        "externalIdPath": "sha",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 30,
+      "tags": [
+        "cve",
+        "mitre"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-exodusintel",
+      "name": "Exodus Intelligence",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.exodusintel.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "zeroday",
+        "exploit"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-exploit-db",
+      "name": "Exploit-DB 最新利用",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.exploit-db.com/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 30,
+      "tags": [
+        "exploit",
+        "poc",
+        "edb"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-github-security-lab",
+      "name": "GitHub Security Lab",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://github.blog/tag/github-security-lab/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "research",
+        "opensource"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-google-tag",
+      "name": "Google 安全与威胁分析",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.google/technology/safety-security/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "apt",
+        "google"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-microsoft-security-blog",
+      "name": "微软安全博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.microsoft.com/en-us/security/blog/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "microsoft",
+        "apt"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-msrc-update-guide",
+      "name": "微软 MSRC 安全更新",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://api.msrc.microsoft.com/update-guide/rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
       "owner_entity_id": "microsoft",
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 60,
       "tags": [
-        "官方",
-        "研究"
+        "microsoft",
+        "windows",
+        "patch-tuesday"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-nvidia-blog",
-      "name": "NVIDIA Blog",
+      "id": "rss-ncsc-uk",
+      "name": "英国 NCSC 报告",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://blogs.nvidia.com/feed/",
+        "feedUrl": "https://www.ncsc.gov.uk/api/1/services/v1/report-rss-feed.xml",
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
-      "tier": "T1",
-      "owner_entity_id": "nvidia",
+      "tier": "T1_5",
+      "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 360,
       "tags": [
-        "官方"
+        "ncsc",
+        "policy"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-aws-ml",
-      "name": "AWS Machine Learning Blog",
-      "kind": "rss",
+      "id": "rss-nuclei-templates",
+      "name": "Nuclei 模板新增检测",
+      "kind": "json_list",
       "config": {
-        "feedUrl": "https://aws.amazon.com/blogs/machine-learning/feed/",
+        "url": "https://api.github.com/repos/projectdiscovery/nuclei-templates/commits?per_page=30",
+        "mode": "json_api",
+        "titlePaths": [
+          "commit.message"
+        ],
+        "summaryPaths": [
+          "commit.message"
+        ],
+        "summaryIsBody": true,
+        "urlTemplate": "{raw:html_url}",
+        "publishedAtPath": "commit.committer.date",
+        "externalIdPath": "sha",
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
-      "tier": "T1",
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "nuclei",
+        "detection",
+        "cve"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-portswigger-research",
+      "name": "PortSwigger 安全研究",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://portswigger.net/research/rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "web",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-projectdiscovery-blog",
+      "name": "ProjectDiscovery 博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://projectdiscovery.io/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "recon",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-qualys-blog",
+      "name": "Qualys 威胁研究",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.qualys.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "research",
+        "vuln"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-rapid7-blog",
+      "name": "Rapid7 研究与公告",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.rapid7.com/blog/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "research",
+        "vuln"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-sans-isc",
+      "name": "SANS ISC 日记",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://isc.sans.edu/rssfeed.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "isc",
+        "diary",
+        "incident"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-securelist",
+      "name": "Kaspersky Securelist",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://securelist.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "apt",
+        "malware"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-sonarsource-research",
+      "name": "SonarSource 安全研究",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.sonarsource.com/blog/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "research",
+        "sast"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-talos",
+      "name": "Cisco Talos 情报博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.talosintelligence.com/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
       "owner_entity_id": null,
       "participation_mode": "editorial",
       "interval_minutes": 120,
       "tags": [
-        "官方",
-        "教程"
+        "malware",
+        "apt"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-github-ai",
-      "name": "GitHub Blog · AI & ML",
+      "id": "rss-tenable-blog",
+      "name": "Tenable 安全博客",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://github.blog/ai-and-ml/feed/",
+        "feedUrl": "https://www.tenable.com/blog/feed",
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
-      "tier": "T1",
+      "tier": "T1_5",
       "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 180,
       "tags": [
-        "官方"
+        "research",
+        "vuln"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-mistral",
-      "name": "Mistral AI",
+      "id": "rss-thedfirreport",
+      "name": "The DFIR Report",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://mistral.ai/news/rss",
+        "feedUrl": "https://thedfirreport.com/feed/",
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
-      "tier": "T1",
+      "tier": "T1_5",
       "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 120,
+      "interval_minutes": 360,
       "tags": [
-        "官方"
+        "dfir",
+        "ransomware",
+        "incident"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
     },
     {
-      "id": "rss-bair",
-      "name": "Berkeley AI Research",
+      "id": "rss-trailofbits",
+      "name": "Trail of Bits 博客",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://bair.berkeley.edu/blog/feed.xml",
+        "feedUrl": "https://blog.trailofbits.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "research",
+        "audit"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-unit42",
+      "name": "Palo Alto Unit 42",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://unit42.paloaltonetworks.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "apt",
+        "malware"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-watchtowr-labs",
+      "name": "watchTowr Labs",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://labs.watchtowr.com/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "research",
+        "edge",
+        "zeroday"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-welivesecurity",
+      "name": "ESET WeLiveSecurity",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.welivesecurity.com/en/rss/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "malware",
+        "apt"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-zdi-blog",
+      "name": "Zero Day Initiative 博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.thezdi.com/blog?format=rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "zdi",
+        "zeroday",
+        "pwn2own"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-zdi-published",
+      "name": "Trend ZDI 已发布公告",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.zerodayinitiative.com/rss/published/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "zdi",
+        "zeroday",
+        "pwn2own"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-trendmicro-research",
+      "name": "Trend Micro 研究与公告",
+      "kind": "web_list",
+      "config": {
+        "url": "https://www.trendmicro.com/en_us/research.html",
+        "parseMode": "html",
+        "itemSelector": "section.filter-list article",
+        "linkSelector": "a",
+        "titleSelector": "h3",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        },
+        "allowUrlPrefixes": [
+          "https://www.trendmicro.com"
+        ]
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "trendmicro",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-4hou",
+      "name": "嘶吼 RoarTalk",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.4hou.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "中文",
+        "cn",
+        "news"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-anquanke",
+      "name": "安全客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://api.anquanke.com/data/v1/rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "中文",
+        "cn",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-arstechnica-security",
+      "name": "Ars Technica 安全",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://arstechnica.com/security/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "news"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-csoonline",
+      "name": "CSO Online",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.csoonline.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "news",
+        "enterprise"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-cyberscoop",
+      "name": "CyberScoop",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://cyberscoop.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "news",
+        "policy"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-cybersecuritydive",
+      "name": "Cybersecurity Dive",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.cybersecuritydive.com/feeds/news/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "news",
+        "enterprise"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-darkreading",
+      "name": "Dark Reading",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.darkreading.com/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "news"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-dbappsecurity-ti",
+      "name": "安恒威胁情报中心",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://ti.dbappsecurity.com.cn/blog/feed",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "中文",
+        "cn",
+        "apt",
+        "threat-intel"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-hackread",
+      "name": "Hackread",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://hackread.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "news",
+        "breach"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-infosecurity-magazine",
+      "name": "Infosecurity Magazine",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.infosecurity-magazine.com/rss/news/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "news"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-krebs",
+      "name": "Krebs on Security",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://krebsonsecurity.com/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "investigation"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-lobsters-security",
+      "name": "Lobsters · security",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://lobste.rs/t/security.rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 60,
+      "tags": [
+        "lobsters",
+        "attention"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-nsfocus-blog",
+      "name": "绿盟科技技术博客",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://blog.nsfocus.net/feed/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 240,
+      "tags": [
+        "中文",
+        "cn",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-paper-seebug",
+      "name": "知道创宇 404 实验室 Paper",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://paper.seebug.org/rss/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "中文",
+        "cn",
+        "research",
+        "apt"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-schneier",
+      "name": "Schneier on Security",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.schneier.com/feed/atom/",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 360,
+      "tags": [
+        "analysis"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-secpulse",
+      "name": "安全脉搏",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.secpulse.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "中文",
+        "cn",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-securityaffairs",
+      "name": "Security Affairs",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://securityaffairs.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "news",
+        "malware"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-seebug",
+      "name": "知道创宇 Seebug 漏洞平台",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://www.seebug.org/rss.xml",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "中文",
+        "cn",
+        "poc",
+        "vuln"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-sploitus",
+      "name": "Sploitus 利用聚合",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://sploitus.com/rss",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "exploit",
+        "aggregator"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "rss-xz-aliyun",
+      "name": "阿里云先知社区",
+      "kind": "rss",
+      "config": {
+        "feedUrl": "https://xz.aliyun.com/feed",
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "中文",
+        "cn",
+        "research"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-hn-cve",
+      "name": "Hacker News · CVE 讨论",
+      "kind": "json_list",
+      "config": {
+        "url": "https://hn.algolia.com/api/v1/search_by_date?query=CVE&tags=story&hitsPerPage=60",
+        "mode": "json_api",
+        "itemsPath": "hits",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "{raw:url}",
+        "publishedAtPath": "created_at",
+        "externalIdPath": "objectID"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 30,
+      "tags": [
+        "hn",
+        "attention"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-hn-exploit",
+      "name": "Hacker News · exploit",
+      "kind": "json_list",
+      "config": {
+        "url": "https://hn.algolia.com/api/v1/search_by_date?query=exploit&tags=story&hitsPerPage=40",
+        "mode": "json_api",
+        "itemsPath": "hits",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "{raw:url}",
+        "publishedAtPath": "created_at",
+        "externalIdPath": "objectID"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 60,
+      "tags": [
+        "hn",
+        "attention"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "web-hn-vulnerability",
+      "name": "Hacker News · vulnerability",
+      "kind": "json_list",
+      "config": {
+        "url": "https://hn.algolia.com/api/v1/search_by_date?query=vulnerability&tags=story&hitsPerPage=40",
+        "mode": "json_api",
+        "itemsPath": "hits",
+        "titlePaths": [
+          "title"
+        ],
+        "urlTemplate": "{raw:url}",
+        "publishedAtPath": "created_at",
+        "externalIdPath": "objectID"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "hot_signal",
+      "interval_minutes": 30,
+      "tags": [
+        "hn",
+        "attention"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false
+    },
+    {
+      "id": "x-vxunderground",
+      "name": "X：vx-underground (@vxunderground)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:vxunderground -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-watchtowr",
+      "name": "X：watchTowr Labs (@watchtowr)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:watchtowr -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-projectdiscovery",
+      "name": "X：ProjectDiscovery (@projectdiscovery)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:projectdiscovery -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-malwrhunterteam",
+      "name": "X：MalwareHunterTeam (@malwrhunterteam)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:malwrhunterteam -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-campuscodi",
+      "name": "X：Catalin Cimpanu (@campuscodi)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:campuscodi -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-shadowserver",
+      "name": "X：ShadowServer (@ShadowServer)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ShadowServer -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "mp-e5ae89e585a8",
+      "name": "公众号：安全内参",
+      "kind": "mp_account",
+      "config": {
+        "ghid": "",
+        "nickname": "安全内参"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "公众号",
+        "待填 DAJIALA_KEY 与 ghid",
+        "行业深度与政策解读"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "mp-e5beaee6ada5",
+      "name": "公众号：微步在线研究响应中心",
+      "kind": "mp_account",
+      "config": {
+        "ghid": "",
+        "nickname": "微步在线研究响应中心"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "公众号",
+        "待填 DAJIALA_KEY 与 ghid",
+        "威胁情报与应急响应"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "mp-e5a587e5ae89",
+      "name": "公众号：奇安信 CERT",
+      "kind": "mp_account",
+      "config": {
+        "ghid": "",
+        "nickname": "奇安信 CERT"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "公众号",
+        "待填 DAJIALA_KEY 与 ghid",
+        "国内漏洞预警与应急通告"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "mp-e995bfe4baad",
+      "name": "公众号：长亭科技",
+      "kind": "mp_account",
+      "config": {
+        "ghid": "",
+        "nickname": "长亭科技"
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "公众号",
+        "待填 DAJIALA_KEY 与 ghid",
+        "安全研究与漏洞分析"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "jina-qianxin-ti",
+      "name": "奇安信威胁情报中心（Jina 渲染）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://r.jina.ai/https://ti.qianxin.com/blog/",
+        "parseMode": "markdown",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "allowUrlPrefixes": [
+          "https://ti.qianxin.com/"
+        ],
+        "_aihot": {
+          "initialBackfillLimit": 8
+        }
+      },
+      "tier": "T2",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 180,
+      "tags": [
+        "待填 JINA_API_KEY",
+        "国内"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "jina-cnvd",
+      "name": "CNVD 漏洞公告（Jina 渲染）",
+      "kind": "web_list",
+      "config": {
+        "url": "https://r.jina.ai/https://www.cnvd.org.cn/flaw/list",
+        "parseMode": "markdown",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "allowUrlPrefixes": [
+          "https://www.cnvd.org.cn/"
+        ],
         "_aihot": {
           "initialBackfillLimit": 8
         }
@@ -200,137 +1807,55 @@
       "participation_mode": "editorial",
       "interval_minutes": 180,
       "tags": [
-        "研究"
+        "待填 JINA_API_KEY",
+        "国内"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false
     },
     {
-      "id": "rss-the-verge-ai",
-      "name": "The Verge · AI",
-      "kind": "rss",
+      "id": "jina-cnnvd",
+      "name": "CNNVD 漏洞预警（Jina 渲染）",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+        "url": "https://r.jina.ai/https://www.cnnvd.org.cn/home/warn",
+        "parseMode": "markdown",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "allowUrlPrefixes": [
+          "https://www.cnnvd.org.cn/"
+        ],
         "_aihot": {
           "initialBackfillLimit": 8
         }
       },
-      "tier": "T2",
+      "tier": "T1",
       "owner_entity_id": null,
       "participation_mode": "editorial",
-      "interval_minutes": 60,
+      "interval_minutes": 180,
       "tags": [
-        "媒体"
+        "待填 JINA_API_KEY",
+        "国内"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false
     },
     {
-      "id": "rss-techcrunch-ai",
-      "name": "TechCrunch · AI",
-      "kind": "rss",
+      "id": "jina-oscs",
+      "name": "OSCS 开源安全情报（Jina 渲染）",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://techcrunch.com/category/artificial-intelligence/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "媒体"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-ars-technica-ai",
-      "name": "Ars Technica · AI",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://arstechnica.com/ai/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "媒体"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-mit-tech-review-ai",
-      "name": "MIT Technology Review · AI",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "媒体"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-the-decoder",
-      "name": "The Decoder",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://the-decoder.com/feed/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "媒体"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-simon-willison",
-      "name": "Simon Willison",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://simonwillison.net/atom/everything/",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "个人"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
-      "id": "rss-import-ai",
-      "name": "Import AI",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://importai.substack.com/feed",
+        "url": "https://r.jina.ai/https://www.oscs1024.com/cm",
+        "parseMode": "markdown",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "allowUrlPrefixes": [
+          "https://www.oscs1024.com/"
+        ],
         "_aihot": {
           "initialBackfillLimit": 8
         }
@@ -340,18 +1865,26 @@
       "participation_mode": "editorial",
       "interval_minutes": 180,
       "tags": [
-        "个人",
-        "周刊"
+        "待填 JINA_API_KEY",
+        "国内"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false
     },
     {
-      "id": "rss-latent-space",
-      "name": "Latent Space",
-      "kind": "rss",
+      "id": "jina-cert360",
+      "name": "360CERT 安全通告（Jina 渲染）",
+      "kind": "web_list",
       "config": {
-        "feedUrl": "https://www.latent.space/feed",
+        "url": "https://r.jina.ai/https://cert.360.cn/warning",
+        "parseMode": "markdown",
+        "itemSelector": "li",
+        "linkSelector": "a",
+        "titleSelector": "a",
+        "allowUrlPrefixes": [
+          "https://cert.360.cn/"
+        ],
         "_aihot": {
           "initialBackfillLimit": 8
         }
@@ -361,10 +1894,120 @@
       "participation_mode": "editorial",
       "interval_minutes": 180,
       "tags": [
-        "个人"
+        "待填 JINA_API_KEY",
+        "国内"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "ext-nvd-cve",
+      "name": "NVD 新增 CVE（外部推送）",
+      "kind": "external",
+      "config": {},
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "external",
+        "待推送脚本",
+        "官方 API 限速、无 RSS；用脚本按 updated 拉取后推送"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "ext-osv",
+      "name": "OSV 开源漏洞库（外部推送）",
+      "kind": "external",
+      "config": {},
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "external",
+        "待推送脚本",
+        "POST 查询接口；脚本按生态批量拉取后推送"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "ext-epss",
+      "name": "FIRST EPSS 评分（外部推送）",
+      "kind": "external",
+      "config": {},
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "external",
+        "待推送脚本",
+        "只有评分没有文章；作为风险信号推送到条目"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "ext-ossf-malicious",
+      "name": "OpenSSF 恶意包库（外部推送）",
+      "kind": "external",
+      "config": {},
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "external",
+        "待推送脚本",
+        "仓库提交流；脚本把新增恶意包推送进来"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "ext-cnvd-login",
+      "name": "CNVD 详情（带会话）（外部推送）",
+      "kind": "external",
+      "config": {},
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "external",
+        "待推送脚本",
+        "站点有防护，需要带 cookie 抓取后推送"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
+    },
+    {
+      "id": "ext-tg-security",
+      "name": "Telegram 安全频道（外部推送）",
+      "kind": "external",
+      "config": {},
+      "tier": "T1",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 120,
+      "tags": [
+        "external",
+        "待推送脚本",
+        "需要 Bot/API 凭据，由转发脚本推送"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": true
     }
   ]
 }

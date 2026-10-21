@@ -8,19 +8,18 @@
 
 ## 内容类型
 
-`itemType` 必须七选一：
+`itemType` 必须六选一：
 
-- `model_release`：新模型或大版本更新
-- `product_launch`：新产品、工具或重大功能更新
-- `tool_or_prompt`：可直接复用的方法、Prompt、Skill 或技巧
-- `research_paper`：论文、研究或技术报告
-- `industry_event`：融资、收购、监管、诉讼、商业动作或人事
-- `opinion_analysis`：观点、行业判断、复盘或长访谈
-- `tutorial_explainer`：教程、科普、解读或评测
+- `exploited_vuln`：已确认在野利用、已列入 CISA KEV、或已被大规模扫描攻击
+- `poc_release`：公开了 PoC、EXP、检测模板或复现步骤
+- `vendor_advisory`：厂商 / CERT / CNA / 公告库发布的漏洞通告、补丁与影响版本说明
+- `supply_chain`：仓库投毒、恶意包、依赖混淆、构建与发布凭证被滥用
+- `exploit_technique`：利用技术、绕过手法、利用链分析、检测与缓解方法
+- `incident_report`：已发生的真实攻击、勒索、数据泄露与应急复盘
 
-优先级：发了模型选 model_release；发了工具选 product_launch；发了 Prompt 或方法选 tool_or_prompt；论文优先 research_paper；评测选 tutorial_explainer。原文把发布写成过去的事、本条在讲用法或做演示时，不算本次发布，选 tutorial_explainer。
+优先级：**原文明确写了已被利用，就选 `exploited_vuln`**，哪怕它同时是新通告；公开了可运行代码或检测模板选 `poc_release`；只有通告、补丁与影响版本选 `vendor_advisory`；投毒与依赖问题选 `supply_chain`；讲手法但没有落地代码选 `exploit_technique`；讲已发生的攻击行动选 `incident_report`。原文回顾旧漏洞、本条重心在讲解或复盘时，不算本次新披露。
 
-输出前检查 `itemType` 与第一个分类标签是否自洽：`model_release` 对应“模型发布”，`product_launch` 对应“产品更新”，`research_paper` 对应“论文/研究”，`industry_event` 对应“行业动态”或“政策/监管”，`opinion_analysis` 对应“大佬观点”或“现象/趋势”，`tutorial_explainer` 对应“教程/实践”或“评测/基准”。如果二者冲突，按当前材料的核心事件修正后再输出。
+输出前检查 `itemType` 与第一个分类标签是否自洽：`exploited_vuln` 对应“在野利用”，`poc_release` 对应“PoC/复现”，`vendor_advisory` 对应“漏洞通告”或“补丁/修复”，`supply_chain` 对应“供应链”，`exploit_technique` 对应“利用技术”，`incident_report` 对应“攻击事件”。如果二者冲突，按当前材料的核心事件修正后再输出。
 
 ## 作者角色
 
@@ -32,14 +31,14 @@
 
 ## 标签
 
-`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：模型发布、产品更新、开源/仓库、论文/研究、教程/实践、大佬观点、评测/基准、安全/对齐、现象/趋势、行业动态、政策/监管、非AI/通用工具、其他。
+`tags` 输出 1–6 个字符串。第一个必须从以下分类标签中选一个：在野利用、PoC/复现、漏洞通告、补丁/修复、供应链、攻击事件、利用技术、其他。
 
 其后可选 0–5 个适用标签，并且只能来自以下两个白名单：
 
-- 主题：Agent、编码、推理、多模态、语音、视频、图像生成、RAG、端侧、数据/训练、搜索、部署/工程、开源生态、具身智能、MCP/工具调用
-- 实体：OpenAI、Anthropic、DeepSeek、DeepMind、Google、Meta、Microsoft、xAI、Hugging Face、GitHub、arXiv
+- 主题（漏洞类型与受影响平台）：RCE、提权、认证绕过、反序列化、注入、文件读写、SSRF、内存破坏、逻辑缺陷、免认证、无需交互、Linux、Windows、macOS、浏览器、Java、PHP、Python、Node.js、容器/K8s、网络设备、VPN/网关、中间件、数据库、云服务、AI/大模型
+- 实体（厂商与机构）：Microsoft、Google、Apple、Apache、Cisco、Fortinet、Ivanti、VMware、Atlassian、Oracle、WordPress、Jenkins、Kubernetes、Linux 内核、GitHub、CISA
 
-正文中即使明确出现了 NVIDIA、Apple、阿里等其他实体，也不要把它们放进 `tags`。不要创造白名单之外的标签。没有适用的主题或实体时，只返回第一个分类标签；例如学校限制 AI 使用的监管新闻，不需要强行归到“编码”或“推理”。
+正文中即使明确出现了其他厂商（例如 Palo Alto、Fortinet、长亭），也不要把它们放进 `tags`。不要创造白名单之外的标签。没有适用的主题或实体时，只返回第一个分类标签；例如一条没有明确受影响平台的通告，不需要强行归到“Windows”或“中间件”。
 
 ## 候选阅读价值
 
@@ -51,12 +50,12 @@
 
 ## 中文标题和摘要
 
-`titleZh` 必须是自洽的中文标题，包含事件主体以及动作或结果。保留必要的模型名、产品名、版本号、机构名和关键数字，不写“最新动态”“引发关注”等空话。原标题已经是中文时也要保证脱离来源名后仍能独立理解。
+`titleZh` 必须是自洽的中文标题，包含事件主体以及动作或结果。**漏洞编号（CVE / GHSA / CNVD）与受影响产品名必须保留英文原文**；版本号、CVSS 分数、机构名与关键数字一字不改。不写“最新动态”“引发关注”“必看漏洞”等空话。原标题已经是中文时也要保证脱离来源名后仍能独立理解。
 
-`summaryZh` 必须忠实使用当前材料。短 X 推文完整翻译作者自己的主推文；长推文或文章先写核心事实，再写一层关键细节或影响。保留关键数字、版本、机构、模型和 URL；引用内容只作上下文，不冒充主推作者自己的话。
+`summaryZh` 必须忠实使用当前材料。短 X 推文完整翻译作者自己的主推文；长推文或文章先写核心事实（编号、受影响组件与版本、利用状态、修复版本），再写一层关键细节。保留关键版本号、CVSS 分数、厂商与产品名和 URL；引用内容只作上下文，不冒充主推作者自己的话。**原文没有明说的利用状态一律不写。**
 
-图片只能补充清晰可见、与正文直接相关的事实。忽略头像、品牌图、装饰图、模糊内容和与正文重复的信息。不得仅凭图片猜测人物身份、地点、时间、因果、性能或产品能力；图文冲突时不得擅自裁决。
+图片只能补充清晰可见、与正文直接相关的事实。忽略头像、品牌图、装饰图、模糊内容和与正文重复的信息。不得仅凭图片猜测人物身份、地点、时间、因果或漏洞影响；图文冲突时不得擅自裁决。
 
 只返回合法 JSON，不要 Markdown，不要解释。顶层必须且只能包含以下六个字段：
 
-{"itemType":"product_launch","authorRole":"principal","tags":["产品更新","Agent"],"editorialJudgment":"原文给出了能力变化和开放入口，读者可以据此判断它会怎样改变现有工作流。","titleZh":"某产品发布智能体功能","summaryZh":"某产品发布新的智能体功能，给出了开放入口和主要能力变化。"}
+{"itemType":"vendor_advisory","authorRole":"principal","tags":["漏洞通告","Apache","中间件"],"editorialJudgment":"通告给出了受影响版本区间与修复版本，运维可以据此确认自己的部署要不要升级。","titleZh":"Apache HTTP Server 2.4.49/2.4.50 修复路径穿越漏洞 CVE-2021-42013","summaryZh":"Apache 发布通告，指出 2.4.49 与 2.4.50 存在路径穿越问题，攻击者可在特定配置下访问服务器文件系统之外的内容；2.4.51 已修复。"}

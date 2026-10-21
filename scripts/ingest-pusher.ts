@@ -23,6 +23,7 @@
 //   */60 * * * *  node --env-file=.env scripts/ingest-pusher.ts --source openssf
 //   30 */2 * * *  node --env-file=.env scripts/ingest-pusher.ts --source cnvd
 import { readFileSync } from "node:fs";
+import { beijingMidnight } from "@aihot/contracts/time";
 
 const SITE = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const TOKEN = process.env.INGEST_TOKEN ?? "";
@@ -260,7 +261,7 @@ async function cnvd(): Promise<Item[]> {
     items.push({
       title,
       url,
-      publishedAt: date ? new Date(`${date}T00:00:00+08:00`).toISOString() : new Date().toISOString(),
+      publishedAt: date ? beijingMidnight(date).toISOString() : new Date().toISOString(),
       author: "CNVD",
     });
   });

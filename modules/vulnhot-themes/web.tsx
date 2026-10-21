@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { WebModule } from "@aihot/web/modules";
 import { resolvedTheme, watchAppearance } from "@aihot/web/lib/local-state";
+import { reducedMotion } from "@aihot/web/lib/motion";
 import { THEME_BOOT_SCRIPT } from "./palette.ts";
 import { applyExtraTheme, readExtraTheme, THEME_CHANGED } from "./web/client.ts";
 
@@ -21,11 +22,11 @@ const CANVAS_ID = "vulnhot-datastream";
 
 /**
  * 幽灵绿的数据流背景：一块 fixed 的 canvas，落在内容之下（html 背景之上），只在黑客配色下出现。
- * 尊重 prefers-reduced-motion，标签页切到后台就停，字号随屏宽。
+ * 尊重系统的「减少动效」偏好（走引擎的 lib/motion.ts），标签页切到后台就停，字号随屏宽。
  */
 function DataStream(): null {
   useEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reducedMotion()) return;
     const canvas = document.createElement("canvas");
     canvas.id = CANVAS_ID;
     canvas.setAttribute("aria-hidden", "true");

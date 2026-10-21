@@ -71,17 +71,18 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
       - name: Web tests
         # 失败时把关键行写进 check run 的注解：注解可以从公开 API 读到，不依赖网页上的日志页。
+        # 注解接口有数量限制，所以压成一条：先关键行，再尾部 40 行，逐行截断后用 %0A 连接。
         run: |
           set +e
-          node --test apps/web/tests/*.test.ts > "$RUNNER_TEMP/web-tests.log" 2>&1
+          log="$RUNNER_TEMP/web-tests.log"
+          node --test apps/web/tests/*.test.ts > "$log" 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            grep -aE '^✖ |AssertionError|matcherResult|Locator:|Expected:|at TestContext|Error: expect' "$RUNNER_TEMP/web-tests.log" \
-              | head -60 \
-              | tr -d '\r' | tr '\n' ' ' | sed 's/%/%25/g' \
-              | fold -w 900 \
-              | while IFS= read -r line; do echo "::error::${line}"; done
-            tail -60 "$RUNNER_TEMP/web-tests.log"
+            summary="$RUNNER_TEMP/web-tests-summary.txt"
+            { grep -aE '✖|Error|error|ERR_|not ok|fail' "$log" | head -30; echo '--- tail ---'; tail -40 "$log"; } \
+              | tr -d '\r' | sed 's/%/%25/g' | cut -c1-300 > "$summary"
+            echo "::error::$(paste -sd'\n' "$summary" | sed ':a;N;$!ba;s/\n/%0A/g')"
+            tail -60 "$log"
           fi
           exit "$status"
 

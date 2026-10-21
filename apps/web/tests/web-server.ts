@@ -13,6 +13,14 @@ import type { FeedItemSummary, SiteItemDetail } from "@aihot/contracts/site";
 /** When the synthetic reports were published. */
 export const FIXTURE_AT = "2026-10-04T08:00:00.000Z";
 
+/** 观测台在只有骨架数据时的样子：页面能画出来，但没有内容。 */
+const EMPTY_OBSERVATORY = {
+  generatedAt: FIXTURE_AT, windowHours: 168,
+  totals: { items: 0, items24h: 0, selected: 0, stories: 0, kev: 0, dailies: 0 },
+  sources: { total: 0, enabled: 0, failing: 0 },
+  flow: [], categories: [], heat: [],
+};
+
 /** A report as list cards show it; the fields a test does not name are fixed. */
 export function feedItem(fields: Partial<FeedItemSummary> & Pick<FeedItemSummary, "id" | "title">): FeedItemSummary {
   return {
@@ -47,6 +55,11 @@ export function fakeApi(route: (url: URL, res: ServerResponse, req: IncomingMess
     if (url.pathname === "/api/site/meta") return res.end(JSON.stringify({ changelogVersion: "fixture" }));
     if (url.pathname === "/api/site/track") { res.statusCode = 204; return res.end(); }
     if (url.pathname === "/api/health") return res.end("{}");
+    // 首页是观测台：它必须读到的这一份给空数据（观测台自身把 stats/hot 当可选的）。
+    if (url.pathname === "/api/site/observatory") {
+      res.setHeader("Cache-Control", "public, max-age=120, s-maxage=120");
+      return res.end(JSON.stringify(EMPTY_OBSERVATORY));
+    }
     res.statusCode = 404;
     res.end(JSON.stringify({ code: "not_found" }));
   });

@@ -83,7 +83,7 @@ test("an all-read page keeps paging, then hides the read cards and shows the unr
   const context = await readerWith(["c1", "c2"]);
   const page = await context.newPage();
   try {
-    await page.goto(`${origin}/`);
+    await page.goto(`${origin}/featured`);
     await expect(page.getByRole("link", { name: "第一页文章甲", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "只看未读" }).click();
     // Both loaded cards are read: the list pages on by itself and lands on the unread report.
@@ -100,7 +100,7 @@ test("a page that fails to load offers a retry that keeps the filter", async () 
   const page = await context.newPage();
   failNextPage = true;
   try {
-    await page.goto(`${origin}/`);
+    await page.goto(`${origin}/featured`);
     await expect(page.getByRole("link", { name: "第一页文章甲", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "只看未读" }).click();
     const retry = page.getByRole("button", { name: "加载失败，点此重试" });
@@ -119,7 +119,7 @@ test("returning to the list keeps the filter and finds the unread report again",
   const context = await readerWith(["c1", "c2"]);
   const page = await context.newPage();
   try {
-    await page.goto(`${origin}/`);
+    await page.goto(`${origin}/featured`);
     await expect(page.getByRole("link", { name: "第一页文章甲", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "只看未读" }).click();
     const opened = page.getByRole("link", { name: "第二页文章甲", exact: true });
@@ -140,7 +140,7 @@ test("a group stays while any selected report in it is unread, and goes once all
   const context = await readerWith(["rep-1", "rep-3", "member-4"]);
   const page = await context.newPage();
   try {
-    await page.goto(`${origin}/?tag=group`);
+    await page.goto(`${origin}/featured?tag=group`);
     await expect(page.getByRole("link", { name: "代表文章", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "只看未读" }).click();
     await expect(page.getByRole("link", { name: "代表文章", exact: true })).toBeVisible();
@@ -165,7 +165,7 @@ for (const phone of [false, true]) test(`a kept group is not greyed and its ${ph
     return getComputedStyle(node).color === grey;
   }, name);
   try {
-    await page.goto(`${origin}/?tag=group`);
+    await page.goto(`${origin}/featured?tag=group`);
     await page.getByRole("button", { name: "只看未读" }).click();
     const title = page.getByRole("heading", { name: "代表文章" });
     await expect(title).toBeVisible();
@@ -183,7 +183,7 @@ test("with everything read and no more pages, the filter says so instead of look
   const context = await readerWith(["c1"]);
   const page = await context.newPage();
   try {
-    await page.goto(`${origin}/?tag=read`);
+    await page.goto(`${origin}/featured?tag=read`);
     await expect(page.getByRole("link", { name: "第一页文章甲", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "只看未读" }).click();
     await expect(page.getByText("没有未读的精选内容", { exact: true })).toBeVisible();
@@ -196,7 +196,7 @@ test("all-read pages stop at the automatic bound and can continue manually witho
   const context = await readerWith(["boundary-1", "boundary-2", "boundary-3", "boundary-4"]);
   const page = await context.newPage();
   try {
-    await page.goto(`${origin}/?tag=boundary`);
+    await page.goto(`${origin}/featured?tag=boundary`);
     const raw = await page.evaluate(() => localStorage.getItem("aihot-read-items"));
     await page.getByRole("button", { name: "只看未读" }).click();
     // 自动加载有上限：到顶后列表交回"加载更多"按钮，剩下的由读者一页页点。

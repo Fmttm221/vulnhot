@@ -1,6 +1,6 @@
 // 观测台：一页看完收了多少、现在最该看什么。数字全部来自公开读取层（/api/site/observatory 等），
 // 读者打开页面不触发任何模型调用。
-import { Link, useLoaderData } from "react-router";
+import { Link, redirect, useLoaderData } from "react-router";
 import type { Route } from "./+types/observatory";
 import type { HotResponse, Observatory, SiteStats } from "@aihot/contracts/site";
 import { CATEGORY_LABELS, type CategoryKey } from "@aihot/contracts/taxonomy";
@@ -44,14 +44,20 @@ const colorOf = (category: string) => (category ? CATEGORY_COLOR[category] ?? "v
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
+  // 观测台没有搜索框；带 q 的首页链接照旧交给搜索页，老链接不会白点。
+  const q = url.searchParams.get("q");
+  if (q && q.trim()) throw redirect(`/all${url.search}`);
   const asked = Number(url.searchParams.get("window") ?? 168);
   const hours = WINDOWS.some((w) => w.hours === asked) ? asked : 168;
+  // 观测台这一份是必须的；统计与热点只是补充，读不到也要把台账画出来。
+  // 上流的缓存头要带进页面：读者看到的新鲜度和接口一致，不是页面自己另算一个。
+  const upstream = new Headers();
   const [observatory, stats, hot] = await Promise.all([
-    loadOr404<Observatory>(`/api/site/observatory?window=${hours}`, { signal: request.signal }),
-    loadOr404<SiteStats>("/api/site/stats", { signal: request.signal }),
-    loadOr404<HotResponse>("/api/site/hot", { signal: request.signal }),
+    loadOr404<Observatory>(`/api/site/observatory?window=${hours}`, { responseHeaders: upstream, signal: request.signal }),
+    loadOr404<SiteStats>("/api/site/stats", { signal: request.signal }).catch(() => null),
+    loadOr404<HotResponse>("/api/site/hot", { signal: request.signal }).catch(() => null),
   ]);
-  return cachedPage(120, { observatory, stats, hot, hours });
+  return cachedPage(120, { observatory, stats, hot, hours }, upstream);
 }
 
 export function meta() {
@@ -65,6 +71,8 @@ export function meta() {
 export default function ObservatoryPage() {
   const { observatory, stats, hot, hours } = useLoaderData<typeof loader>();
   const { totals, sources, flow, categories, heat } = observatory;
+  const entries = hot?.entries ?? [];
+  const latest = stats?.latest ?? [];
   const window = WINDOWS.find((w) => w.hours === hours)!;
 
   const bars: BarItem[] = categories.map((c) => ({
@@ -115,7 +123,7 @@ export default function ObservatoryPage() {
 
       {/* 流向图 + 分类分布 */}
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section className="rounded-[var(--radius-panel)] border border-line bg-surface">
+        <section className="min-w-0 rounded-[var(--radius-panel)] border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">信源 → 分类</h2>
             <span className="text-[11px] text-ink-4">带宽按情报条数加权 · 悬停看具体流量</span>
@@ -131,7 +139,7 @@ export default function ObservatoryPage() {
           </div>
         </section>
 
-        <section className="rounded-[var(--radius-panel)] border border-line bg-surface">
+        <section className="min-w-0 rounded-[var(--radius-panel)] border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">分类分布</h2>
             <span className="text-[11px] text-ink-4">共 {categories.length} 个分类</span>
@@ -151,13 +159,13 @@ export default function ObservatoryPage() {
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className="rounded-[var(--radius-panel)] border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
-            <h2 className="text-[13px] font-semibold text-ink">热点事件 Top {Math.min(8, hot.entries.length)}</h2>
+            <h2 className="text-[13px] font-semibold text-ink">热点事件 Top {Math.min(8, entries.length)}</h2>
             <Link to="/hot" className="flex items-center gap-0.5 text-[11.5px] text-ink-4 hover:text-accent">
               完整榜单 <IconChevronRight size={12} />
             </Link>
           </header>
           <ol className="divide-y divide-line-soft">
-            {hot.entries.slice(0, 8).map((entry) => (
+            {entries.slice(0, 8).map((entry) => (
               <li key={entry.story.publicId}>
                 <Link to={`/story/${entry.story.publicId}`} className="flex items-start gap-3 px-4 py-2.5 hover:bg-well">
                   <span className={`num mt-0.5 w-4 shrink-0 text-[13px] font-semibold ${entry.rank <= 3 ? "text-hot" : "text-ink-4"}`}>{entry.rank}</span>
@@ -172,7 +180,7 @@ export default function ObservatoryPage() {
                 </Link>
               </li>
             ))}
-            {hot.entries.length === 0 && <li className="px-4 py-8 text-center text-[12.5px] text-ink-4">过去 48 小时还没有形成热点</li>}
+            {entries.length === 0 && <li className="px-4 py-8 text-center text-[12.5px] text-ink-4">过去 48 小时还没有形成热点</li>}
           </ol>
         </section>
 
@@ -184,7 +192,7 @@ export default function ObservatoryPage() {
             </Link>
           </header>
           <ol className="divide-y divide-line-soft">
-            {stats.latest.map((item) => (
+            {latest.map((item) => (
               <li key={item.id}>
                 <Link to={`/items/${item.id}`} className="block px-4 py-2.5 hover:bg-well">
                   <span className="line-clamp-2 text-[13.5px] font-medium leading-snug text-ink">{item.title}</span>
@@ -192,7 +200,7 @@ export default function ObservatoryPage() {
                 </Link>
               </li>
             ))}
-            {stats.latest.length === 0 && <li className="px-4 py-8 text-center text-[12.5px] text-ink-4">还没有入选内容</li>}
+            {latest.length === 0 && <li className="px-4 py-8 text-center text-[12.5px] text-ink-4">还没有入选内容</li>}
           </ol>
         </section>
       </div>

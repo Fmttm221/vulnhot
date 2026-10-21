@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { CATEGORY_KEYS } from "@aihot/contracts/taxonomy";
 import { UNSAFE_decodeViaTurboStream } from "react-router";
-import { fakeApi, startWebServer, type WebServer } from "./web-server.ts";
+import { FIXTURE_AT, fakeApi, startWebServer, type WebServer } from "./web-server.ts";
 
 let web: WebServer;
 let origin: string;
@@ -26,6 +26,16 @@ const api = fakeApi(async (url, res, req) => {
     return { filters, cards: [], nextCursor: null, dayCounts: [], hot: null };
   }
   if (url.pathname === "/api/site/hot") return { entries: [] };
+  if (url.pathname === "/api/site/observatory") {
+    // 首页的观测台：和列表页拿同一个 deadline，页面新鲜度才和接口一致。
+    res.setHeader("X-Accel-Expires", `@${deadline}`);
+    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=30");
+    return {
+      generatedAt: FIXTURE_AT, windowHours: 168,
+      totals: { items: 0, items24h: 0, selected: 0, stories: 0, kev: 0, dailies: 0 },
+      sources: { total: 0, enabled: 0, failing: 0 }, flow: [], categories: [], heat: [],
+    };
+  }
   if (url.pathname === "/api/site/echo-client") return { forwarded: req.headers["x-forwarded-for"], real: req.headers["x-real-ip"] };
   if (url.pathname === "/api/site/download") {
     res.setHeader("Content-Type", "text/markdown; charset=utf-8");
@@ -53,7 +63,7 @@ after(() => web.stop());
 
 test("public route subsets produce the same complete navigation data; filters still differ", async () => {
   const answers = await Promise.all(["", "?_routes=root", "?_routes=routes%2Fhome", "?_routes=unknown"].map(async (query) => {
-    const res = await fetch(`${origin}/_.data${query}`);
+    const res = await fetch(`${origin}/featured.data${query}`);
     assert.equal(res.status, 200);
     assert.match(res.headers.get("Cache-Control")!, /^public,/);
     assert.equal(res.headers.get("X-Accel-Expires"), `@${deadline}`);
@@ -62,9 +72,9 @@ test("public route subsets produce the same complete navigation data; filters st
     assert.ok(body.includes("root") && body.includes("routes/home"));
     return body;
   }));
-  assert.ok(answers.every((body) => body === answers[0]));
+  assert.ok(answers.every((body) => body === answers[0]), `lengths: ${answers.map((b) => b.length).join(",")}`);
   const category = CATEGORY_KEYS.at(-1)!;
-  const filtered = await fetch(`${origin}/_.data?category=${category}&_routes=root`);
+  const filtered = await fetch(`${origin}/featured.data?category=${category}&_routes=root`);
   const body = await filtered.text();
   assert.ok(body.includes(category));
   assert.notEqual(body, answers[0]);
@@ -85,13 +95,13 @@ test("navigation streams are plain text for download managers, including errors"
 });
 
 test("HTML and navigation share freshness; cookies do not personalize public results", async () => {
-  const html = await fetch(`${origin}/`);
+  const html = await fetch(`${origin}/featured`);
   assert.equal(html.status, 200);
   assert.equal(html.headers.get("X-Accel-Expires"), `@${deadline}`);
   assert.match(await html.text(), /精选/);
   // The api's deadline also fixes the result's own expiry, so reads seconds apart compare byte for byte.
-  const plain = await fetch(`${origin}/_.data`);
-  const signedIn = await fetch(`${origin}/_.data?_routes=root`, { headers: { cookie: "admin_session=private; reader=returning" } });
+  const plain = await fetch(`${origin}/featured.data`);
+  const signedIn = await fetch(`${origin}/featured.data?_routes=root`, { headers: { cookie: "admin_session=private; reader=returning" } });
   assert.match(plain.headers.get("Cache-Control")!, /^public,/);
   assert.equal(plain.headers.get("X-Accel-Expires"), `@${deadline}`);
   assert.equal(signedIn.headers.get("Set-Cookie"), null);
@@ -132,7 +142,7 @@ test("browser freshness shares the selected deadline, including slow sibling loa
   const savedDeadline = deadline;
   try {
     deadline = Math.floor(Date.now() / 1000) + 20;
-    for (const pathname of ["/", "/_.data?_routes=routes%2Fhome"]) {
+    for (const pathname of ["/featured", "/featured.data?_routes=routes%2Fhome"]) {
       const res = await fetch(origin + pathname);
       const cc = res.headers.get("Cache-Control")!;
       const browser = Number(cc.match(/(?:^|,)\s*max-age=(\d+)/)![1]);
@@ -148,7 +158,7 @@ test("browser freshness shares the selected deadline, including slow sibling loa
     // finishes after it.
     deadline = Math.floor(Date.now() / 1000) + 2;
     metaAfterDeadline = true;
-    await Promise.all(["/", "/_.data?_routes=routes%2Fhome"].map(async (pathname) => {
+    await Promise.all(["/featured", "/featured.data?_routes=routes%2Fhome"].map(async (pathname) => {
       const res = await fetch(origin + pathname);
       assert.equal(res.status, 200);
       assert.equal(res.headers.get("Cache-Control"), "no-cache");

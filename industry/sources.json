@@ -96,7 +96,9 @@
         "distro"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "登记库镜像：与 NVD/GHSA 覆盖重复，均分 30.7，1.7 天烧 2.06M tokens 只产出 1 条精选"
     },
     {
       "id": "rss-debian-dsa",
@@ -118,7 +120,9 @@
         "distro"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "正文抽取 100% unconfirmed，0 产出"
     },
     {
       "id": "rss-drupal-security",
@@ -361,7 +365,9 @@
         "macos"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "更新日志式长文：257 条 0 产出，烧 6.00M tokens（占总预算 23%）"
     },
     {
       "id": "web-nginx-advisories",
@@ -489,7 +495,9 @@
         "mitre"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "登记库镜像：均分 10.6，127 条 0 产出，烧 1.97M tokens"
     },
     {
       "id": "rss-exodusintel",
@@ -617,7 +625,9 @@
         "patch-tuesday"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "正文抽取 100% unconfirmed，0 产出"
     },
     {
       "id": "rss-ncsc-uk",
@@ -671,7 +681,9 @@
         "cve"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "检测模板不是情报：均分 10.5，53 条 1 产出"
     },
     {
       "id": "rss-portswigger-research",
@@ -1187,7 +1199,9 @@
         "news"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "正文抽取 100% unconfirmed（付费墙/反爬），模型只能凭标题猜，0 产出"
     },
     {
       "id": "rss-dbappsecurity-ti",
@@ -1337,7 +1351,9 @@
         "apt"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "正文抽取 100% unconfirmed，0 产出"
     },
     {
       "id": "rss-schneier",
@@ -1466,7 +1482,9 @@
         "research"
       ],
       "site_fulltext": false,
-      "syndicate_fulltext": false
+      "syndicate_fulltext": false,
+      "enabled": false,
+      "_off_reason": "正文抽取 100% unconfirmed，0 产出"
     },
     {
       "id": "web-hn-cve",

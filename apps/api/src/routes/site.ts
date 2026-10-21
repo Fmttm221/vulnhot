@@ -13,6 +13,7 @@ import { hotSearchLinks, loadHotStrip } from "@aihot/backend/publication/hot";
 import { loadChangelog, siteMeta } from "@aihot/backend/site/meta";
 import { loadContact, loadMakerAvatar } from "@aihot/backend/site/contact";
 import { loadSiteStats } from "@aihot/backend/site/stats";
+import { loadObservatory, normalizeWindow } from "@aihot/backend/publication/observatory";
 import { itemAvailability } from "@aihot/backend/publication/availability";
 import { listTopicSummaries, loadTopicPage, topicBrowseLinks } from "@aihot/backend/publication/topics";
 import { registerFeedback } from "./feedback.ts";
@@ -120,6 +121,16 @@ export function registerSite(app: FastifyInstance) {
 
   app.get("/api/site/stats", siteHandler(async (req, reply) => {
     return sendJsonWithEtag(req, reply, await loadSiteStats(), { etagPrefix: "stats", cacheControl: "public, max-age=300, s-maxage=300" });
+  }));
+
+  // 观测台：一页的汇总。window 是小时数（1/6/24/72/168/720），别的值按 7 天算。
+  app.get("/api/site/observatory", siteHandler(async (req, reply) => {
+    const raw = Number(looseQuery(req).window ?? 168);
+    if (!Number.isFinite(raw) || raw <= 0) throw new BadRequest("invalid window");
+    const windowHours = normalizeWindow(Math.round(raw));
+    return sendJsonWithEtag(req, reply, await loadObservatory(windowHours), {
+      etagPrefix: `observatory-${windowHours}`, cacheControl: "public, max-age=60, s-maxage=60",
+    });
   }));
 
   app.get("/api/site/changelog", siteHandler(async (req, reply) => {

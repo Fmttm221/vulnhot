@@ -401,6 +401,43 @@ export interface SiteStats {
   latest: Array<{ id: string; title: string; source: string }>;
 }
 
+/**
+ * 观测台（/observatory）：一页看完「收了多少、现在最该看什么」。
+ * 数字全部来自公开读取层，和网站、接口看到的是同一份内容。
+ */
+export interface Observatory {
+  /** 这批数字算出来的时间（ISO），页面上用相对时间显示。 */
+  generatedAt: string;
+  /** 流向图和热度曲线的时间窗口（小时）。 */
+  windowHours: number;
+  totals: {
+    /** 库内已发布的情报（不含撤回的）。 */
+    items: number;
+    /** 24 小时内新增的情报。 */
+    items24h: number;
+    /** 已入选精选的条数。 */
+    selected: number;
+    /** 事件（story）数量，合并过的只算最终那一个。 */
+    stories: number;
+    /** 命中 CISA KEV 的 CVE 条数；没装漏洞信号模块时为 0。 */
+    kev: number;
+    /** 已生成的日报期数。 */
+    dailies: number;
+  };
+  sources: {
+    total: number;
+    enabled: number;
+    /** 抓取连续失败、需要人看一眼的信源。 */
+    failing: number;
+  };
+  /** 信源 → 分类的流量：窗口内每条「哪个信源产出了几条哪个分类」；空串表示没打上分类。 */
+  flow: Array<{ source: string; category: string; count: number }>;
+  /** 每个分类在窗口内的条数，多的在前；空串表示没打上分类。 */
+  categories: Array<{ category: string; count: number }>;
+  /** 窗口内按小时聚合的发布量，用于画热度曲线。 */
+  heat: Array<{ at: string; count: number }>;
+}
+
 export interface StoryFollowup {
   factId: string;
   representative: { id: string; title: string; source: { name: string }; timelineAt: string };

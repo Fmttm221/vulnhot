@@ -203,14 +203,15 @@ test("all-read pages stop at the automatic bound and can continue manually witho
     const more = page.getByRole("button", { name: "加载更多", exact: true });
     await expect(more).toBeVisible();
     // 自动加载到了第几批取决于首屏能放下几张卡片（站点文案、导航条目、筛选栏都会影响可见高度），
-    // 所以不假设"再点一次就到最后一页"；每次点击都先确认按钮还在，避免撞上列表重渲染时已被移除的
-    // 按钮而干等到动作超时。三条意图不变：上限存在、手动能继续、本地记录不变。
+    // 所以不假设"再点一次就到最后一页"：每轮先等按钮回到可点（加载中它会被换成"正在加载"），
+    // 再点一次并观察目标页是否出现。三条意图不变：上限存在、手动能继续、本地记录不变。
     const target = page.getByRole("link", { name: "批次 5", exact: true });
-    for (let i = 0; i < 8 && !(await target.isVisible()); i++) {
+    for (let i = 0; i < 15 && !(await target.isVisible()); i++) {
+      await more.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
       if (await more.isVisible()) await more.click({ timeout: 8000 }).catch(() => {});
-      await page.waitForTimeout(250);
+      await page.waitForTimeout(200);
     }
-    await expect(target).toBeVisible();
+    await expect(target).toBeVisible({ timeout: 10000 });
     assert.equal(await page.evaluate(() => localStorage.getItem("aihot-read-items")), raw);
   } finally { await context.close(); }
 });

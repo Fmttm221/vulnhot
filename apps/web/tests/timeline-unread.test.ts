@@ -204,8 +204,11 @@ test("all-read pages stop at the automatic bound and can continue manually witho
     await more.click();
     await expect(more).toBeVisible();
     await expect(page.getByText("这批精选都读过了", { exact: true })).toBeVisible();
-    await more.click();
-    await expect(page.getByRole("link", { name: "批次 5", exact: true })).toBeVisible();
+    // 自动加载到了哪一批取决于首屏能放下几张卡片（站点文案、导航条目、筛选栏都会影响可见高度），
+    // 所以这里不去假设"再点一次就是最后一页"，只验证这份意图：自动加载有上限，剩下的点得下去，最终能看到更早的未读精选。
+    const target = page.getByRole("link", { name: "批次 5", exact: true });
+    for (let i = 0; i < 5 && !(await target.isVisible().catch(() => false)); i++) await more.click();
+    await expect(target).toBeVisible();
     assert.equal(await page.evaluate(() => localStorage.getItem("aihot-read-items")), raw);
   } finally { await context.close(); }
 });

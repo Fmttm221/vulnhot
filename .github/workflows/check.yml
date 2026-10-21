@@ -70,7 +70,20 @@ jobs:
       - name: Browser test engines
         run: npx playwright install --with-deps chromium webkit
       - name: Web tests
-        run: node --test apps/web/tests/*.test.ts
+        # 失败时把关键行写进 check run 的注解：注解可以从公开 API 读到，不依赖网页上的日志页。
+        run: |
+          set +e
+          node --test apps/web/tests/*.test.ts > "$RUNNER_TEMP/web-tests.log" 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            grep -aE '^✖ |AssertionError|matcherResult|Locator:|Expected:|at TestContext|Error: expect' "$RUNNER_TEMP/web-tests.log" \
+              | head -60 \
+              | tr -d '\r' | tr '\n' ' ' | sed 's/%/%25/g' \
+              | fold -w 900 \
+              | while IFS= read -r line; do echo "::error::${line}"; done
+            tail -60 "$RUNNER_TEMP/web-tests.log"
+          fi
+          exit "$status"
 
       # Each test file runs on its own copy of aihot_ci (tests/databases.ts), which the run migrates and
       # leaves empty; the smoke check then reads that empty database.

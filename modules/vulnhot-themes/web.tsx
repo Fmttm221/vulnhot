@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import type { WebModule } from "@aihot/web/modules";
 import { resolvedTheme, watchAppearance } from "@aihot/web/lib/local-state";
 import { reducedMotion } from "@aihot/web/lib/motion";
-import { THEME_BOOT_SCRIPT } from "./palette.ts";
+import { IMPLIED_THEME, THEME_BOOT_SCRIPT } from "./palette.ts";
 import { applyExtraTheme, readExtraTheme, THEME_CHANGED } from "./web/client.ts";
 
 function PaletteIcon({ size = 18 }: { size?: number }): ReactNode {
@@ -115,7 +115,7 @@ function ThemeEffects(): ReactNode {
       if (change !== "theme") return;
       const extra = readExtraTheme();
       if (!extra) return;
-      const implied = extra === "hacker" ? "dark" : "light";
+      const implied = IMPLIED_THEME[extra];
       if (resolvedTheme() !== implied) {
         applyExtraTheme(null);
         setStream(false);

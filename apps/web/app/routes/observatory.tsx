@@ -15,7 +15,7 @@ import { HeatCurve } from "../features/observatory/HeatCurve";
 import type { Screen } from "../components/shell/screens";
 import { IconChevronRight } from "../components/icons";
 
-export const handle: Screen = { tab: "featured", name: "观测台" };
+export const handle: Screen = { tab: "observatory", name: "观测台" };
 export { pageHeaders as headers } from "../lib/api.server";
 export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
 
@@ -58,7 +58,7 @@ export function meta() {
   return pageMeta({
     title: "观测台",
     description: "全球漏洞情报的聚合概览：信源到分类的流向、分类分布、热度曲线，以及现在最该看的几条。",
-    path: "/observatory",
+    path: "/",
   });
 }
 
@@ -89,7 +89,7 @@ export default function ObservatoryPage() {
           {WINDOWS.map((w) => (
             <Link
               key={w.hours}
-              to={w.hours === 168 ? "/observatory" : `/observatory?window=${w.hours}`}
+              to={w.hours === 168 ? "/" : `/?window=${w.hours}`}
               className={`rounded-[6px] px-2.5 py-1 text-[12px] transition-colors ${w.hours === hours ? "bg-accent-soft font-medium text-accent-ink" : "text-ink-3 hover:bg-well hover:text-ink"}`}
             >
               {w.label}
@@ -179,7 +179,7 @@ export default function ObservatoryPage() {
         <section className="rounded-[var(--radius-panel)] border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">最新精选</h2>
-            <Link to="/" className="flex items-center gap-0.5 text-[11.5px] text-ink-4 hover:text-accent">
+            <Link to="/featured" className="flex items-center gap-0.5 text-[11.5px] text-ink-4 hover:text-accent">
               情报流 <IconChevronRight size={12} />
             </Link>
           </header>

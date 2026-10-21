@@ -1,4 +1,4 @@
-// 两套额外配色（黑客「幽灵绿」/ 白客「白帽蓝」）。
+// 三套额外配色（黑客「幽灵绿」/ 黑客「血焰红」/ 白客「白帽蓝」）。
 //
 // 做法：不改框架的 CSS，也不改框架的主题脚本。模块在 <head> 里注入一段先于绘制运行的脚本：
 // 读本站自己的偏好（localStorage `vulnhot-theme`），给 <html> 打上 `data-vulnhot`，并把这一套变量
@@ -8,7 +8,14 @@
 /** 本站自己的偏好键（与框架的 `aihot-theme` 分开，避免互相覆盖）。 */
 export const THEME_KEY = "vulnhot-theme";
 
-export type ExtraTheme = "hacker" | "whitehat";
+export type ExtraTheme = "hacker" | "blood" | "whitehat";
+
+/** 这套配色配哪个深浅色底（框架的深浅色开关要跟着对齐，两边的开关才不会打架）。 */
+export const IMPLIED_THEME: Record<ExtraTheme, "light" | "dark"> = {
+  hacker: "dark",
+  blood: "dark",
+  whitehat: "light",
+};
 
 /** 每套配色的说明，用在配色页上。 */
 export const THEMES: ReadonlyArray<{ key: ExtraTheme; name: string; pitch: string; swatch: string[] }> = [
@@ -17,6 +24,12 @@ export const THEMES: ReadonlyArray<{ key: ExtraTheme; name: string; pitch: strin
     name: "黑客 · 幽灵绿",
     pitch: "纯黑底 + 幽灵绿，背景是缓慢下落的代码流。终端感最强，夜里看漏洞最清醒。",
     swatch: ["#02080a", "#0a2418", "#00ff9c", "#ff5c74"],
+  },
+  {
+    key: "blood",
+    name: "黑客 · 血焰红",
+    pitch: "深蓝黑底 + 血焰橙红，角落有暖光晕。比幽灵绿温和，长时间看面板不刺眼，仪表盘感最强。",
+    swatch: ["#0b0f14", "#151d26", "#e4572e", "#f4a259"],
   },
   {
     key: "whitehat",
@@ -48,6 +61,27 @@ html[data-vulnhot="hacker"]{
 --selection:rgba(0,255,156,.25)
 }
 html[data-vulnhot="hacker"] ::-webkit-scrollbar-thumb{background:rgba(0,255,156,.25)}
+html[data-vulnhot="blood"]{color-scheme:dark;background:#0b0f14}
+html[data-vulnhot="blood"] body{background:transparent}
+html[data-vulnhot="blood"]{
+background-image:radial-gradient(1200px 600px at 12% -10%,rgba(228,87,46,.10),transparent 60%),
+radial-gradient(900px 500px at 100% 0%,rgba(42,157,143,.07),transparent 55%)}
+html[data-vulnhot="blood"]{
+--bg:#0b0f14;--bg-sunk:#0d1218;--bg-muted:#111827;--well:rgba(228,87,46,.05);
+--surface:#0f141b;--surface-2:#111a22;--raised:#151d26;
+--sidebar:#0c1116;--daybar:#0e141a;
+--ink:#e2e8f0;--ink-2:#cbd5e1;--ink-3:#94a3b8;--ink-4:#64748b;
+--line:rgba(228,87,46,.15);--line-strong:rgba(228,87,46,.3);--line-soft:rgba(228,87,46,.08);
+--accent:#e4572e;--accent-ink:#f4a259;--accent-soft:rgba(228,87,46,.14);--accent-softer:rgba(228,87,46,.06);--accent-contrast:#0b0f14;
+--note:#f4a259;--hot:#dc2626;--hot-soft:rgba(220,38,38,.16);--amber:#f59e0b;--amber-ink:#fbbf24;--amber-soft:rgba(245,158,11,.12);
+--ok:#65a30d;--ok-soft:rgba(101,163,13,.14);--ok-ink:#a3e635;
+--rank-1:#e4572e;--rank-2:#f4a259;--rank-3:#f59e0b;--rank-rest:#64748b;
+--shadow-card:0 1px 2px rgba(0,0,0,.4);--shadow-card-hover:0 3px 14px rgba(0,0,0,.55);
+--shadow-soft:0 6px 18px rgba(0,0,0,.5);--shadow-thumb:0 1px 2px rgba(0,0,0,.6);--shadow-pop:0 16px 40px rgba(0,0,0,.62);
+--prose-ink:#dbe3ee;--code-bg:rgba(6,10,14,.92);--code-keyword:#e4572e;--code-string:#8ad7a2;--code-number:#f4a259;--code-title:#8ad7ff;--code-variable:#f59e0b;--code-meta:#dc2626;
+--selection:rgba(228,87,46,.26)
+}
+html[data-vulnhot="blood"] ::-webkit-scrollbar-thumb{background:rgba(228,87,46,.28)}
 html[data-vulnhot="whitehat"]{color-scheme:light;background:#f6f9fd}
 html[data-vulnhot="whitehat"]{
 --bg:#f6f9fd;--bg-sunk:#eef3fa;--bg-muted:#e4ecf7;--well:#eef3fa;
@@ -70,9 +104,9 @@ html[data-vulnhot="whitehat"]{
  */
 export const THEME_BOOT_SCRIPT = `(function(){try{
 var K=${JSON.stringify(THEME_KEY)},S="vulnhot-theme-style";
-var p=localStorage.getItem(K);if(p!=="hacker"&&p!=="whitehat")return;
+var p=localStorage.getItem(K);if(p!=="hacker"&&p!=="blood"&&p!=="whitehat")return;
 var h=document.documentElement;
-h.setAttribute("data-theme",p==="hacker"?"dark":"light");
+h.setAttribute("data-theme",p==="whitehat"?"light":"dark");
 h.setAttribute("data-vulnhot",p);
 var s=document.getElementById(S);
 if(!s){s=document.createElement("style");s.id=S;s.textContent=${JSON.stringify(PALETTE_CSS)};document.head.appendChild(s);}

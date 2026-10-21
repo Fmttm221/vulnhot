@@ -61,6 +61,8 @@ const ENGINE_REDIRECTS: RedirectRule[] = [
     headers: { "Cache-Control": "private, no-store" },
   },
   { match: "prefix", path: "/sources", status: 302, location: "/admin/sources*", why: "admin bookmarks" },
+  // 观测台搬家到首页：上线当天的链接仍然可用。
+  { match: "exact", path: "/observatory", status: 301, location: "/", keepQuery: true, why: "observatory became the home page" },
 ];
 
 

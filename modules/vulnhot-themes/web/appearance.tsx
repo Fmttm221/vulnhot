@@ -1,4 +1,4 @@
-// /appearance：配色选择。五档：跟随系统、浅色、深夜（框架自带的两档）、黑客（幽灵绿）、白客（白帽蓝）。
+// /appearance：配色选择。六档：跟随系统、浅色、深夜（框架自带的三档）、黑客（幽灵绿）、黑客（血焰红）、白客（白帽蓝）。
 // 点一下立即生效并记住；框架的「我的 → 深浅色」开关仍然可用，两边写的是同一组偏好。
 import { useEffect, useState } from "react";
 import { Kicker } from "@aihot/web/components/ui/Kicker";
@@ -11,7 +11,7 @@ import { applyExtraTheme, readExtraTheme } from "./client.ts";
 export const handle: Screen = { tab: "me", name: "配色" };
 
 export function meta() {
-  return pageMeta({ title: "配色", description: "VulnHOT 的配色：跟随系统、浅色、深夜，以及黑客（幽灵绿）与白客（白帽蓝）两套额外配色。", path: "/appearance" });
+  return pageMeta({ title: "配色", description: "VulnHOT 的配色：跟随系统、浅色、深夜，以及黑客（幽灵绿 / 血焰红）与白客（白帽蓝）三套额外配色。", path: "/appearance" });
 }
 
 type Choice = "system" | "light" | "dark" | ExtraTheme;
@@ -28,7 +28,7 @@ function currentChoice(): Choice {
 
 /** 切换：额外配色只是一层覆盖；基础档交给框架自己的偏好与 applyTheme，避免两边各写一半。 */
 function choose(choice: Choice): void {
-  if (choice === "hacker" || choice === "whitehat") {
+  if (choice !== "system" && choice !== "light" && choice !== "dark") {
     applyExtraTheme(choice);
     return;
   }
@@ -62,8 +62,9 @@ export default function Appearance() {
       <Kicker>外观</Kicker>
       <h1 className="mt-3 text-[30px] font-black leading-[1.15] tracking-[-0.02em] text-ink lg:text-[34px]">换一套配色</h1>
       <p className="mt-2 max-w-[640px] text-[15px] leading-[1.75] text-ink-3">
-        前两档是框架自带的基础色，后两档是本站加的：<span className="text-accent">黑客</span>把整站压成幽灵绿，并在内容后面挂一层缓慢下落的代码流；
-        <span className="text-accent">白客</span>换成接近白纸的冷白底配皇家蓝，像一份审计报告。选择只存在当前浏览器，不影响别人看到的样子。
+        前三档是框架自带的基础色，后三档是本站加的：<span className="text-accent">幽灵绿</span>把整站压成终端绿，并在内容后面挂一层缓慢下落的代码流；
+        <span className="text-accent">血焰红</span>是深蓝黑底配血焰橙红、角落带暖光晕，看仪表盘最舒服；
+        <span className="text-accent">白帽蓝</span>换成接近白纸的冷白底配皇家蓝，像一份审计报告。选择只存在当前浏览器，不影响别人看到的样子。
       </p>
 
       <div className="mt-7 grid gap-3 sm:grid-cols-2">

@@ -1,6 +1,6 @@
 // 浏览器一侧：应用/读取额外配色。放在 web/ 下，由网页的 tsconfig（带 DOM）检查；
 // palette.ts 只放数据与 CSS，后端与构建两侧都能安全导入。
-import { PALETTE_CSS, THEME_KEY, type ExtraTheme } from "../palette.ts";
+import { IMPLIED_THEME, PALETTE_CSS, THEME_KEY, type ExtraTheme } from "../palette.ts";
 
 const STYLE_ID = "vulnhot-theme-style";
 
@@ -20,8 +20,8 @@ export function applyExtraTheme(pref: ExtraTheme | null): void {
       return;
     }
     localStorage.setItem(THEME_KEY, pref);
-    localStorage.setItem("aihot-theme", pref === "hacker" ? "dark" : "light");
-    html.setAttribute("data-theme", pref === "hacker" ? "dark" : "light");
+    localStorage.setItem("aihot-theme", IMPLIED_THEME[pref]);
+    html.setAttribute("data-theme", IMPLIED_THEME[pref]);
     html.setAttribute("data-vulnhot", pref);
     let style = document.getElementById(STYLE_ID);
     if (!style) {
@@ -41,7 +41,7 @@ export function readExtraTheme(): ExtraTheme | null {
   if (typeof localStorage === "undefined") return null;
   try {
     const value = localStorage.getItem(THEME_KEY);
-    return value === "hacker" || value === "whitehat" ? value : null;
+    return value === "hacker" || value === "blood" || value === "whitehat" ? value : null;
   } catch {
     return null;
   }

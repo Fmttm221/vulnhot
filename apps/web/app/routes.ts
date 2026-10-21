@@ -13,14 +13,15 @@ const modulePages: RouteConfigEntry[] = MODULES.flatMap((m) =>
 const moduleAdminPages: RouteConfigEntry[] = MODULES.flatMap((m) => (m.adminPages ?? []).map((p) => page(m.name, p)));
 
 export default [
-  index("routes/home.tsx"),
+  // 首页是观测台；情报流（精选）挪到 /featured，链接和导航都跟着改过了。
+  index("routes/observatory.tsx"),
+  route("featured", "routes/home.tsx"),
   route("all", "routes/all.tsx"),
   route("all/search-busy", "routes/search-busy.tsx", { id: "all-search-busy" }),
   route("search-busy", "routes/search-busy.tsx", { id: "search-busy" }),
   route("items/:id", "routes/item.tsx"),
   route("items/:id/original", "routes/item-original.tsx", { id: "item-original" }),
   route("hot", "routes/hot.tsx"),
-  route("observatory", "routes/observatory.tsx"),
   route("story/:publicId", "routes/story.tsx"),
   route("daily", "routes/report-latest.tsx", { id: "daily-latest" }),
   route("daily/archive", "routes/daily-archive.tsx"),

@@ -30,7 +30,7 @@ const api = fakeApi((url, res) => {
   if (p === "/api/site/hot") return { computedAt: at, windowHours: 48, entries: [] };
   if (p === "/api/site/timeline") {
     const tag = url.searchParams.get("tag");
-    const cursor = url.searchParams.get("oracle");
+    const cursor = url.searchParams.get("cursor");
     if (tag === "boundary") {
       const n = cursor ? Number(cursor) : 1;
       return { filters: { channel: "all", category: null, tag }, cards: [card(`boundary-${n}`, `批次 ${n}`)], nextCursor: n < 5 ? String(n + 1) : null, hot: null, dayCounts: { "2026-10-04": 5 } };

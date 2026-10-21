@@ -1,0 +1,10 @@
+{
+  "name": "@aihot/vulnhot-themes",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./module.ts",
+    "./web": "./web.tsx"
+  }
+}

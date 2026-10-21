@@ -67,6 +67,7 @@
 | `modules/vulnhot-themes/` | 额外两套配色：**黑客（幽灵绿）** 与 **白客（白帽蓝）**，页面在 `/appearance`，侧栏与「我的」页都有入口。做法是模块在 `<head>` 注入一段先于绘制运行的脚本，给 `<html>` 打上 `data-vulnhot` 并塞入一套 CSS 变量；框架的浅色/深夜/跟随系统照旧生效，两套偏好各管各的（用框架的深浅色开关一动，就退出额外配色）。黑客配色会在内容后面挂一块 `canvas` 画缓慢下落的代码流：尊重 `prefers-reduced-motion`、标签页切到后台就停 |
 | `modules/vuln-signals/` | 文章页上的**客观信号**：CVSS / EPSS / KEV 三值 + 风险画像雷达 + 进展阶段条 + 同事实的进展时间线 + 攻击面标签 + 「这条信息有误？」入口（点它会把草稿写进本站的草稿键，跳到引擎的反馈页并预填）。表 `cve_risk_signals`、`cve_repo_counts`（迁移 `0901` / `0902`）；四个定时任务分别同步 CISA KEV（每 6 小时）、FIRST EPSS（每天 05:20）、NVD CVSS（每 10 分钟补 18 个，未认证 5 次/30 秒所以慢）、GitHub PoC 仓库计数（每 15 分钟补 12 个）；接口 `GET /api/site/signals/:id`。**只抓我们自己收录过的 CVE**（从精选标题与摘要里抽编号），不为全库付代价 |
 | `modules/vuln-perspective/` | 每条精选的**红队视角 / 蓝队视角**。模块自带表 `vuln_perspective`（迁移 `0900_vuln_perspective.sql`）、自己的队列 `vuln-perspective.compose`、每 4 分钟挑 4 条缺这两段的精选补写，读取接口 `GET /api/site/perspective/:id`；提示词在模块自己的 `prompts/perspective.md`（改它不用改代码），模型步骤名 `perspective`（可用 `PERSPECTIVE_MODEL` 单独换模型）。**硬规则：只写材料支持的事实、不产出可执行 payload、不推断利用状态**；材料不足时写明“材料未给出”，并单独列出 `caveats` |
+| `modules/vuln-brief/` | 给精选补一份**不懂安全的人也能看懂的精读**：先给“谁做的 / 能干什么 / 为什么现在管”三句话，再给六段（发生了什么、这东西是什么、攻击者能干什么、我是否受影响的可执行自查、现在该做什么、名词小抄）。表 `vuln_brief`（迁移 `0903` / `0904`）、队列 `vuln-brief.compose`、每 10 分钟挑 2 条补写，接口 `GET /api/site/brief/:id`，提示词在 `prompts/brief.md`，模型步骤名 `brief`（可用 `BRIEF_MODEL` 单独换模型）。**不是每条精选都精读**：只在进 CISA KEV、EPSS ≥ 0.1、有公开 PoC 仓库、一手源且 CVSS ≥ 9.0、或影响面命中白名单时触发，并且一天最多 `MAX_PER_DAY` 条（默认 12）——这是这个模块的预算闸门。材料由本条正文 + 客观信号（CVSS/EPSS/KEV/PoC 仓库数）+ 同一事件的其他报道拼成，素材不足时输出 `caveats` 而不是补编 |
 
 **一处框架改动（有意为之，已最小化）**：文章详情页原本没有任何模块插口，红蓝视角无法挂上去。所以在 `apps/web/app/modules.ts` 加了一个通用插口 `WebModule.itemPage`，并在 `apps/web/app/routes/item.tsx` 里用十几行把它渲染在 AI 导读下面。这两处都是**通用插口**（任何模块都能用），合并上游时冲突面很小；除此之外 `apps/`、`packages/` 未改。
 
@@ -236,12 +237,29 @@
 `nvd-recent`（NVD 2.0 的 `descriptions` 是数组，`json_list` 的点路径取不到；官方无 RSS）、`osv-dev`（`POST /v1/query`）、`epss-first`（只是评分，没有文章实体）。这三者属于风险信号模块（CVSS/EPSS/KEV 结构化数值）的数据源，不该进“文章”流水线。
 
 ### 3.3 上线后的实测调整（GitHub 提交流）
-
 初次批量采集后改了三处，已回写 `sources.json` 并同步到库里：
 
 1. **GitHub 提交流原来用 `commits.atom`（github.com），上线后连续超时 / 连接被重置**，而 `api.github.com` 一直正常。所以 `cvelistV5`、`nuclei-templates` 两个源改成 `json_list`，直接打 `https://api.github.com/repos/<repo>/commits?per_page=30`：`titlePaths` 与 `summaryPaths` 都取 `commit.message`，并设 `summaryIsBody: true`，这样不必再去抓 github.com 的提交页正文。
 2. **另外三个提交流（nomi-sec/PoC-in-GitHub、metasploit-framework、trickest/cve）已移除**：它们的提交信息是 “Auto Update README.md” 这类机械文本，当文章标题没有价值。**“某个 CVE 到今天一共有多少个 PoC 仓库”这类信号属于阶段 D 的 `cve-repo-index` 模块**（按编号建索引），不该硬塞进文章流水线。
 3. **CISA KEV 仍然偶发超时**（cisa.gov 时快时慢：同一地址 .NET 抓 1.5 秒、Node 抓 20 秒以上）。源保留，失败会自动重试并计入健康度；抓到即入库。
+
+### 3.4 信源复审：从“广度优先”转成“质量优先”
+
+运行约两天后，按**实际 token 成本与真实产出**把 74 个启用源审了一遍（数据来自 `receipts` 与 `publications`，不是凭感觉）：
+
+> 25.89M 打分 tokens 里，**12.57M（49%）来自“一条精选都没产出”的源**，16.24M（63%）来自“产出 ≤1 条”的源。
+
+因此停用 9 个源（启用 74 → 65，省掉 43% 的打分预算），原因写在各条目的 `_off_reason` 里：
+
+| 源 | 消耗 | 产出 | 停用理由 |
+|---|---:|---:|---|
+| `web-apple-security` | 6.00 M | 0 | 更新日志式长文，与 CVE 通告重复，占 23% 预算 |
+| `json-redhat-cve` | 2.06 M | 1 | 登记库镜像，与 NVD/GHSA 重复 |
+| `rss-cve-mitre-recent` | 1.97 M | 0 | 登记库镜像，均分 10.6 |
+| `rss-nuclei-templates` | 0.61 M | 1 | 检测模板不是情报，均分 10.5 |
+| `rss-darkreading` / `rss-xz-aliyun` / `rss-debian-dsa` / `rss-paper-seebug` / `rss-msrc-update-guide` | 0.62 M | 0 | 正文抽取 100% `unconfirmed`（付费墙/反爬），模型只能凭标题猜 |
+
+另外 `rss-sploitus` 的抓取间隔统一为 120 分钟（聚合器单价约 158k tokens / 条精选）。**这不是“永久删除”**：登记库的结构化价值（CVSS/EPSS/引用计数）继续由 `vuln-signals` 自己同步，不依赖它们产文章；抓取器按站点修好后可以重新启用。
 
 ---
 

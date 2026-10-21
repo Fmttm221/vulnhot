@@ -42,11 +42,11 @@ async function selected(category: string, reason: string | null, copy = SPACE) {
 const category = (key: string) => CATEGORIES.find((c) => c.key === key)!;
 
 test("the title is larger than the summary, followed by the source and Beijing date in grey", async () => {
-  const card = await selected("ai-products", "官方演示了 Space 的协作用法。");
+  const card = await selected("poc", "官方演示了 Space 的协作用法。");
   assert.equal(card.schema, "2.0");
   assert.equal(card.header, undefined, "a header title cannot be made larger");
   const [title, meta, summary, reason, buttons] = card.body.elements;
-  const products = category("ai-products");
+  const products = category("poc");
   assert.equal(title.content, `**OpenAI 演示 ChatGPT Space 团队协作用法** <text_tag color='${products.tagColor}'>${products.label}</text_tag>`);
   const size = card.config.style.text_size[title.text_size];
   for (const end of ["default", "pc", "mobile"]) assert.match(size[end], /^heading-[34]$/, "18px on computers, 16px on phones");
@@ -61,13 +61,13 @@ test("the title is larger than the summary, followed by the source and Beijing d
 });
 
 test("without a reason the card goes from the summary straight to the buttons", async () => {
-  const card = await selected("ai-models", null);
+  const card = await selected("advisory", null);
   assert.deepEqual(card.body.elements.map((e: any) => e.tag), ["markdown", "markdown", "markdown", "column_set"]);
-  assert.match(card.body.elements[0].content, new RegExp(`color='${category("ai-models").tagColor}'`));
+  assert.match(card.body.elements[0].content, new RegExp(`color='${category("advisory").tagColor}'`));
 });
 
 test("markdown characters in the model's words show as written", async () => {
-  const card = await selected("paper", null, { title: "延迟 <1 秒的 *Flash* 模型", summary: "支持 [beta] 接口与 `code` 示例。" });
+  const card = await selected("incident", null, { title: "延迟 <1 秒的 *Flash* 模型", summary: "支持 [beta] 接口与 `code` 示例。" });
   assert.ok(card.body.elements[0].content.startsWith("**延迟 &#60;1 秒的 &#42;Flash&#42; 模型**"));
   assert.equal(card.body.elements[2].content, "支持 &#91;beta&#93; 接口与 &#96;code&#96; 示例。");
 });

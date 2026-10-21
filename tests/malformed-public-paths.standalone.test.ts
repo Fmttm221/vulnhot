@@ -45,7 +45,7 @@ test('decoded controls in topic paths return 404 without injecting response head
 });
 
 test('ordinary first topic page keeps its permanent redirect', async () => {
-  const response = await fetch(`${web.origin}/topics/openai/page/1`, { redirect: 'manual' });
+  const response = await fetch(`${web.origin}/topics/google/page/1`, { redirect: 'manual' });
   assert.equal(response.status, 308);
-  assert.equal(response.headers.get('location'), '/topics/openai');
+  assert.equal(response.headers.get('location'), '/topics/google');
 });

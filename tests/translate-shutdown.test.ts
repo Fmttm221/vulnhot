@@ -56,7 +56,7 @@ for (const misaligned of [false, true]) test(`SIGTERM finishes the sent ${misali
   const second = misaligned ? `Second paragraph ${T}.` : `Second paragraph ${T}. ${'More English '.repeat(170)}`;
   const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.org/translation-shutdown-${T}/${misaligned}`, title: `Shutdown ${T}`, bodyHtml: `<p>${first}</p><p>${second}</p>`, bodyText: first + second, bodyStatus: 'ok', language: 'en', via: 'fetch', publishedAt: new Date(), discoveredAt: new Date(Date.now() + 86_400_000) });
   await sql`INSERT INTO analyses (article_id,input_revision,origin,relevance,category,title_zh,summary_zh,reason_zh,score,selected)
-    VALUES (${articleId},1,'rule','pass','ai-models',${`终止测试${T}`},'摘要','理由',90,true)`;
+    VALUES (${articleId},1,'rule','pass','advisory',${`终止测试${T}`},'摘要','理由',90,true)`;
   await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
   const interrupted = runTranslation();
   await Promise.race([active.asked.promise, interrupted.done.then(() => assert.fail('translation ended before a request'))]);
@@ -85,7 +85,7 @@ test('a batch the provider refuses after SIGTERM is an interruption, not a trans
   active = { asked: gate(), hold: gate(), calls: 0, misaligned: false, refused: true };
   const { articleId } = await upsertMaterial({ sourceId: SOURCE, url: `https://example.org/translation-shutdown-${T}/refused`, title: `Refused ${T}`, bodyHtml: `<p>Refused paragraph ${T}.</p><p>Another refused paragraph ${T}.</p>`, bodyText: `Refused paragraph ${T}. Another refused paragraph ${T}.`, bodyStatus: 'ok', language: 'en', via: 'fetch', publishedAt: new Date(), discoveredAt: new Date(Date.now() + 86_400_000) });
   await sql`INSERT INTO analyses (article_id,input_revision,origin,relevance,category,title_zh,summary_zh,reason_zh,score,selected)
-    VALUES (${articleId},1,'rule','pass','ai-models',${`拒绝测试${T}`},'摘要','理由',90,true)`;
+    VALUES (${articleId},1,'rule','pass','advisory',${`拒绝测试${T}`},'摘要','理由',90,true)`;
   await publishArticle(articleId, { releasedAt: new Date(Date.now() - 60_000) });
   const interrupted = runTranslation();
   await Promise.race([active.asked.promise, interrupted.done.then((r) => assert.fail(`translation ended before a request: ${JSON.stringify(r)}`))]);

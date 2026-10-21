@@ -31,7 +31,7 @@ async function citation(title: string) {
     bodyText: 'Licensed report fixture', bodyHtml: '<p>Licensed report fixture</p>', bodyStatus: 'ok', via: 'fetch', publishedAt: generatedAt });
   await sql`UPDATE articles SET grouping_status = 'complete' WHERE id = ${articleId}`;
   await sql`INSERT INTO analyses (article_id, input_revision, origin, relevance, category, title_zh, summary_zh, score, selected)
-    VALUES (${articleId}, 1, 'rule', 'pass', 'industry', ${title}, ${`${title} current summary`}, 90, true)`;
+    VALUES (${articleId}, 1, 'rule', 'pass', 'incident', ${title}, ${`${title} current summary`}, 90, true)`;
   await publishArticle(articleId, { releasedAt: generatedAt });
   return { itemId: articleId, title, summary: `${title} frozen summary`, sourceUrl: `https://example.com/${T}/${sequence}`, sourceName: 'Issue source' };
 }

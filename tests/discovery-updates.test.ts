@@ -46,7 +46,7 @@ async function material(id: string, options: { source?: string; future?: boolean
     VALUES (${id},${source},${id},${`https://example.org/${id}`},'公开报道','2026-10-01','2026-10-01','2026-10-01','2026-10-01')`;
   await sql`INSERT INTO publications (article_id,source_id,title,summary,url,timeline_at,discovered_at,sort_at,selected,eligible,indexable,visible_after,updated_at,channel,category)
     VALUES (${id},${source},'公开报道','公开摘要',${`https://example.org/${id}`},'2026-10-01','2026-10-01','2026-10-01',true,true,true,
-      ${options.future ? '2100-01-01' : '2026-10-01'},'2026-10-01','news','ai-models')`;
+      ${options.future ? '2100-01-01' : '2026-10-01'},'2026-10-01','news','advisory')`;
 }
 
 test('discovery dates follow page content and publication scope', async () => {

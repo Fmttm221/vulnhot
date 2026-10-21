@@ -100,7 +100,7 @@ test('SSR list and visited query variants return offline without another read',a
     await context.setOffline(true);
     await page.goBack();
     await expect(page.getByRole('link',{name:'分类 ai-models',exact:true})).toBeVisible({timeout:1500});
-    await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',origin+'/?category=ai-models');
+    await expect(page.locator('link[rel=canonical]')).toHaveAttribute('href',origin+'/?category=advisory');
   }finally{await context.close();}
 });
 

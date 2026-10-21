@@ -38,7 +38,7 @@ async function item(date: string) {
 const report = async (kind: string, key: string) => (await sql`SELECT content, revision, generated_at FROM reports WHERE kind = ${kind} AND key = ${key}`)[0];
 
 async function daily(date: string, id?: string) {
-  const sections = id ? [{ label: "行业动态", items: [{ itemId: id, title: id }] }] : [];
+  const sections = id ? [{ label: "攻击事件", items: [{ itemId: id, title: id }] }] : [];
   await sql`INSERT INTO reports (kind, key, window_start, window_end, content, generated_at)
     VALUES ('daily', ${date}, now(), now(), ${sql.json({ date, sections })}, now())
     ON CONFLICT (kind, key) DO UPDATE SET content = EXCLUDED.content`;
@@ -93,7 +93,7 @@ test("empty older gaps cannot starve a later daily, weekly or monthly, and failu
   // An older issue carried an item; the days after it are empty. Weeklies and monthlies are compiled from dailies.
   const early = await item("2024-01-23");
   await sql`INSERT INTO reports (kind, key, window_start, window_end, content, generated_at)
-    VALUES ('daily', '2024-01-23', now(), now(), ${sql.json({ sections: [{ label: "行业动态", items: [{ itemId: early, title: early }] }] })}, now())`;
+    VALUES ('daily', '2024-01-23', now(), now(), ${sql.json({ sections: [{ label: "攻击事件", items: [{ itemId: early, title: early }] }] })}, now())`;
   await item("2024-02-02");
   await assert.rejects(composeDueReports(editionAt("daily", "2024-02-02", 3600)), /reports:/);
   for (const [kind, key] of [["daily", "2024-02-02"], ["weekly", "2024-W04"], ["monthly", "2024-01"]]) {
@@ -105,7 +105,7 @@ test("a week or month that ended before the first daily is not due, so a site st
   // The site's first daily is Monday 2024-02-05: the weeks and the month 2024-01 before it have no daily to sum up.
   const first = await item("2024-02-05");
   await sql`INSERT INTO reports (kind, key, window_start, window_end, content, generated_at)
-    VALUES ('daily', '2024-02-05', now(), now(), ${sql.json({ sections: [{ label: "行业动态", items: [{ itemId: first, title: first }] }] })}, now())`;
+    VALUES ('daily', '2024-02-05', now(), now(), ${sql.json({ sections: [{ label: "攻击事件", items: [{ itemId: first, title: first }] }] })}, now())`;
   const { generated, failed } = await composeDueReports(editionAt("daily", "2024-02-05", 3600));
   assert.deepEqual([generated, failed], [[], []]);
   assert.equal(await report("weekly", "2024-W05"), undefined);

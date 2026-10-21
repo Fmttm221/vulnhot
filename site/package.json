@@ -11,5 +11,10 @@
     "./modules/web": "./modules/web.ts",
     "./pages/*": "./pages/*",
     "./brand/*": "./brand/*"
+  },
+  "dependencies": {
+    "@aihot/vulnhot-themes": "*",
+    "@aihot/vuln-perspective": "*",
+    "@aihot/vuln-signals": "*"
   }
 }

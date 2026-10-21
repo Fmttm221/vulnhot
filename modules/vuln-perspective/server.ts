@@ -36,22 +36,79 @@ const composeQueue = defineQueue<{ articleId: string }>({
   options: { policy: "short", retryLimit: 3, retryDelay: 60, retryBackoff: true, expireInSeconds: 900 },
   worker: { batchSize: 2, pollingIntervalSeconds: 5 },
   run: async (batch) => {
-    for (const data of batch) await composeOne(data.articleId);
+    for (const data of batch) await composePerspective(data.articleId);
   },
 });
 
-async function composeOne(articleId: string): Promise<void> {
+const CVE_RE = /CVE-\d{4}-\d{4,7}/gi;
+
+/** 这条精选是不是同时生成了小白精读：是就走深度模式（vuln-brief 模块的表，不存在时当没有）。 */
+async function hasBrief(articleId: string): Promise<boolean> {
+  try {
+    const [row] = await sql<{ ok: number }[]>`SELECT 1 AS ok FROM vuln_brief WHERE article_id = ${articleId}`;
+    return Boolean(row);
+  } catch {
+    return false;
+  }
+}
+
+/** 客观信号写成几行给模型：有就引用，没抓到就不提。 */
+async function signalLines(cves: string[]): Promise<string[]> {
+  if (!cves.length) return [];
+  try {
+    const [row] = await sql<{ cvss: string | null; epss: string | null; in_kev: boolean | null; kev_due_date: Date | null; total: number | null }[]>`
+      SELECT sig.cvss, sig.epss, sig.in_kev, sig.kev_due_date, rc.total
+      FROM cve_risk_signals sig FULL JOIN cve_repo_counts rc ON rc.cve_id = sig.cve_id
+      WHERE sig.cve_id = ANY(${cves}) OR rc.cve_id = ANY(${cves})
+      ORDER BY coalesce(sig.in_kev, false) DESC, coalesce(sig.epss, 0) DESC
+      LIMIT 1`;
+    if (!row) return [`CVE：${cves.join("、")}`];
+    return [
+      `CVE：${cves.join("、")}`,
+      `CVSS：${row.cvss ?? "未知"}`,
+      `EPSS：${row.epss === null ? "未知" : `${Math.round(Number(row.epss) * 1000) / 10}%`}`,
+      `CISA KEV：${row.in_kev ? `在册${row.kev_due_date ? `，修复截止 ${row.kev_due_date.toISOString().slice(0, 10)}` : ""}` : "不在册"}`,
+      `GitHub 上提到该编号的仓库数：${row.total ?? "未统计"}`,
+    ];
+  } catch {
+    return [`CVE：${cves.join("、")}`];
+  }
+}
+
+/** 同一事件里其他信源的报道：把材料拼厚，不只凭一条薄材料硬写。 */
+async function siblingsFor(articleId: string): Promise<Array<{ source: string; title: string; summary: string }>> {
+  try {
+    return await sql<{ source: string; title: string; summary: string }[]>`
+      SELECT s.name AS source, p.title, coalesce(p.summary, '') AS summary
+      FROM publications p
+      JOIN articles a ON a.id = p.article_id
+      JOIN sources s ON s.id = a.source_id
+      WHERE p.visibility = 'public'
+        AND p.story_id IS NOT NULL
+        AND p.story_id = (SELECT story_id FROM publications WHERE article_id = ${articleId} AND story_id IS NOT NULL)
+        AND p.article_id <> ${articleId}
+      ORDER BY p.published_at DESC NULLS LAST
+      LIMIT 5`;
+  } catch {
+    return [];
+  }
+}
+
+/** 给一条精选生成红蓝视角。导出给脚本与后台用：一条一次模型调用。 */
+export async function composePerspective(articleId: string): Promise<void> {
   const [row] = await sql<Row[]>`
     SELECT p.article_id, p.title, p.summary, p.category, p.tags, p.url, a.revision, a.body_text
     FROM publications p JOIN articles a ON a.id = p.article_id
     WHERE p.article_id = ${articleId} AND p.visibility = 'public' AND p.selected`;
   if (!row) return;
+  const deep = await hasBrief(row.article_id);
+  const cves = [...new Set(`${row.title} ${row.summary ?? ""}`.match(CVE_RE) ?? [])].map((c) => c.toUpperCase());
   const model = await modelFor("perspective");
   const result = await chatJson({
     model,
     purpose: "perspective",
     subject: `article:${row.article_id}@${row.revision}`,
-    promptVersion: "vuln-perspective-1",
+    promptVersion: "vuln-perspective-2",
     system: PERSPECTIVE_SYSTEM,
     user: perspectiveUser({
       title: row.title,
@@ -60,10 +117,13 @@ async function composeOne(articleId: string): Promise<void> {
       tags: row.tags ?? [],
       url: row.url,
       body: row.body_text,
+      deep,
+      signals: await signalLines(cves),
+      siblings: await siblingsFor(row.article_id),
     }),
     schema: PerspectiveSchema,
     temperature: 0.3,
-    maxTokens: 3200,
+    maxTokens: deep ? 4800 : 3200,
   });
   await sql`
     INSERT INTO vuln_perspective (article_id, revision, model, red_zh, blue_zh, facts)

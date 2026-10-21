@@ -19,7 +19,7 @@ import { BRIEF_SYSTEM, briefUser, type SiblingReport } from "./prompt.ts";
 /** 一次最多补几条：控制单次运行的花费，也让新精选先出现。 */
 const PER_RUN = 2;
 /** 一天最多生成几条精读：这就是这个模块的预算闸门，超了等明天。 */
-const MAX_PER_DAY = 12;
+const MAX_PER_DAY = 30;
 /** 只补最近这么多天的精选：更老的是首次导入的存量，不再为它付费。 */
 const WINDOW_DAYS = 30;
 /** 触发条件：EPSS 下限、一手源 CVSS 下限。 */

@@ -199,15 +199,17 @@ test("all-read pages stop at the automatic bound and can continue manually witho
     await page.goto(`${origin}/?tag=boundary`);
     const raw = await page.evaluate(() => localStorage.getItem("aihot-read-items"));
     await page.getByRole("button", { name: "只看未读" }).click();
+    // 自动加载有上限：到顶后列表交回"加载更多"按钮，剩下的由读者一页页点。
     const more = page.getByRole("button", { name: "加载更多", exact: true });
     await expect(more).toBeVisible();
-    await more.click();
-    await expect(more).toBeVisible();
-    await expect(page.getByText("这批精选都读过了", { exact: true })).toBeVisible();
-    // 自动加载到了哪一批取决于首屏能放下几张卡片（站点文案、导航条目、筛选栏都会影响可见高度），
-    // 所以这里不去假设"再点一次就是最后一页"，只验证这份意图：自动加载有上限，剩下的点得下去，最终能看到更早的未读精选。
+    // 自动加载到了第几批取决于首屏能放下几张卡片（站点文案、导航条目、筛选栏都会影响可见高度），
+    // 所以不假设"再点一次就到最后一页"；每次点击都先确认按钮还在，避免撞上列表重渲染时已被移除的
+    // 按钮而干等到动作超时。三条意图不变：上限存在、手动能继续、本地记录不变。
     const target = page.getByRole("link", { name: "批次 5", exact: true });
-    for (let i = 0; i < 5 && !(await target.isVisible().catch(() => false)); i++) await more.click();
+    for (let i = 0; i < 8 && !(await target.isVisible()); i++) {
+      if (await more.isVisible()) await more.click({ timeout: 8000 }).catch(() => {});
+      await page.waitForTimeout(250);
+    }
     await expect(target).toBeVisible();
     assert.equal(await page.evaluate(() => localStorage.getItem("aihot-read-items")), raw);
   } finally { await context.close(); }

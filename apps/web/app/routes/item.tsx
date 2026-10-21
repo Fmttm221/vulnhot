@@ -1,7 +1,8 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState , type ComponentType } from "react";
 import { Await, isRouteErrorResponse, Link, useAsyncError, useLoaderData, useNavigate, useRevalidator, type ClientLoaderFunctionArgs } from "react-router";
 import type { Route } from "./+types/item";
 import type { FeedItemSummary, SiteItemDetail } from "@aihot/contracts/site";
+import { webModules } from "../site-modules";
 import { ITEM_COPY, SITE } from "@aihot/site";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
@@ -39,6 +40,28 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 type Preview = { item: null; preview: FeedItemSummary; detail: Promise<{ item: SiteItemDetail }> };
+
+/** 模块在文章页上加的部件（WebModule.itemPage），按站点的模块顺序；没有模块时是空数组。 */
+const ITEM_PARTS = webModules().flatMap((m) => (m.itemPage ? [{ name: m.name, load: m.itemPage }] : []));
+
+/** 文章页上模块的部件：加载完成后原样排在 AI 导读下面，服务端渲染阶段先不占位。 */
+function ModuleItemBlocks({ item }: { item: SiteItemDetail }) {
+  const [parts, setParts] = useState<Array<{ name: string; Block: ComponentType<{ item: SiteItemDetail }> }>>([]);
+  useEffect(() => {
+    let alive = true;
+    Promise.all(ITEM_PARTS.map(async (p) => ({ name: p.name, part: (await p.load()).default })))
+      .then((loaded) => {
+        if (alive) setParts(loaded.map((x) => ({ name: x.name, Block: x.part.Block })));
+      })
+      .catch(() => {
+        /* 模块不在就什么都不画 */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return <>{parts.map(({ name, Block }) => <Block key={name} item={item} />)}</>;
+}
 
 /**
  * Phones: an article tapped in a list opens at once with what the card showed (title, summary, reason),
@@ -501,6 +524,8 @@ function ItemView({ item }: { item: SiteItemDetail }) {
               <p className="text-[18px] leading-[1.7] text-ink xl:text-[20px] xl:leading-[1.7]">{item.summary}</p>
             </section>
           )}
+
+          <ModuleItemBlocks item={item} />
 
           {item.reason && !summaryOnly && (
             <section className="mt-6 border-t border-line pt-4 lg:hidden">

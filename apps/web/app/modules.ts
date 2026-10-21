@@ -6,7 +6,7 @@
 // page's code: the page waits for its parts while its own code loads (site-modules.ts `loadParts`) and then
 // renders them like any import.
 import type { ComponentType, ReactNode } from "react";
-import type { TopicSummary } from "@aihot/contracts/site";
+import type { SiteItemDetail, TopicSummary } from "@aihot/contracts/site";
 import type { NavItem, Tab } from "./components/shell/nav";
 
 export interface AdminNavEntry {
@@ -99,6 +99,14 @@ export interface AgentPart {
   apiErrors?: Array<[status: string, what: ReactNode]>;
 }
 
+/** A module's part of an article page (routes/item.tsx), under the AI 导读. */
+export interface ItemPagePart {
+  /** Named in the part's own heading; the page draws its blocks in the site's module order. */
+  name: string;
+  /** Drawn under the AI 导读, before the same-event note and the full text. */
+  Block: ComponentType<{ item: SiteItemDetail }>;
+}
+
 /** A module's part of a topic page (routes/topic.tsx), from what its server module's topics.page returned for it. */
 export interface TopicPagePart {
   /** What it is called: after "最新动态与" in the page's title, and in the name of its structured-data list. */
@@ -147,6 +155,8 @@ export interface WebModule {
   };
   agent?: Part<AgentPart>;
   topicPage?: Part<TopicPagePart>;
+  /** Its part of an article page (routes/item.tsx). */
+  itemPage?: Part<ItemPagePart>;
   /** Paths of the marks it serves that are drawn in white, for a dark tile (components/BrandMark.tsx). */
   darkMarks?: string[];
   /** The starred page (routes/starred.tsx): buttons ahead of 导入文件 that bring stars in from elsewhere, each resolving to the line it reports. */

@@ -19,7 +19,9 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 浏览器安装要下 ~200 MB，Playwright CDN 偶尔会慢到十几分钟：25 分钟会把这个正常波动
+    # 变成超时取消，所以留出余量。真正慢的地方由下面的缓存解决。
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:17-alpine
@@ -67,6 +69,12 @@ jobs:
         run: npm run typecheck
       - name: Build web
         run: npm run build -w @aihot/web
+      # 两个浏览器每次都要从 Playwright 的 CDN 下 ~200 MB，命中缓存时这一步只剩校验。
+      - name: Restore browser engines
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Browser test engines
         run: npx playwright install --with-deps chromium webkit
       - name: Web tests

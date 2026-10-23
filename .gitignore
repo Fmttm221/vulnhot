@@ -17,3 +17,4 @@ fontsource-noto-sans-sc-*.tgz
 
 # 本机（手机/Termux）部署脚本与运维细节，含内网拓扑，不进公开仓库
 deploy/termux/
+docs/deploy-termux.md

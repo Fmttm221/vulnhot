@@ -271,13 +271,13 @@
 | Cloudflare 托管挑战 | `bleepingcomputer.com`、`securityweek.com`、`therecord.media` | 403 + `cf-mitigated: challenge`，标题 `Just a moment...` | IP 信誉好的出口（住宅节点，或部分日本/台湾/美国机房节点） |
 | 工作量证明人机页 | `theregister.com` | 标题 `Are we human?` | 放弃，同题材由 Talos/ZDI/SANS/Krebs 覆盖 |
 
-现在的做法：Termux 里跑一个 mihomo 本地出口（`127.0.0.1:7890`），后端 `EGRESS_PROXY_URL` 指向它；
+做法：在本机跑一个 mihomo 本地出口（`127.0.0.1:7890`，配置文件里只留 `mixed-port` + 一个 `url-test` 组 + `MATCH` 规则，不启用 redir-port/fake-ip），后端 `EGRESS_PROXY_URL` 指向它；
 同时把**已实测能直连的 60 个主机**写进 `site/site.ts` 的 `DEPLOYMENT.directFetchHosts`，只有必须出境的请求才走代理。
 这样机场流量只花在必须的地方，共享出口 IP 被限流也不影响主站。两个反例：`api.github.com` 走代理会被限流（403），
 `api.anquanke.com` 走代理直接连不上（000），所以它们必须在直连名单里。
 
 新增的信源（The Hacker News、BleepingComputer、SecurityWeek、The Record、Google Online Security Blog）都靠这条路抓。
-完整配置、节点钉选与看门狗见 [`docs/deploy-termux.md`](docs/deploy-termux.md)。
+节点掉线由本地进程的守护与探活兜底；具体配置随部署环境而定，不属于本仓库的一部分（`deploy/` 已在 `.gitignore` 里）。
 
 ---
 

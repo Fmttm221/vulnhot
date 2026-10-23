@@ -45,6 +45,10 @@
 | **公开 API v1** | <https://vulnhot.com/openapi-v1.json> | 匿名只读、无需 token：条目、事件、热点、日报、周报 |
 | **MCP / Agent** | <https://vulnhot.com/agent> · <https://vulnhot.com/llms.txt> | 把站接进你的 Agent：MCP 工具、Agent Markdown、字段说明 |
 
+<p align="center">
+  <img src="docs/assets/vulnhot-feed-light.png" alt="精选情报流：按天分组、可折叠，每条都带评分与「为什么值得看」" width="92%">
+</p>
+
 ## 它做什么
 
 ```

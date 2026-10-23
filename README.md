@@ -45,11 +45,6 @@
 | **公开 API v1** | <https://vulnhot.com/openapi-v1.json> | 匿名只读、无需 token：条目、事件、热点、日报、周报 |
 | **MCP / Agent** | <https://vulnhot.com/agent> · <https://vulnhot.com/llms.txt> | 把站接进你的 Agent：MCP 工具、Agent Markdown、字段说明 |
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/vulnhot-phone-dark.png">
-  <img src="docs/assets/vulnhot-phone-dark.png" alt="手机上的精选情报流" width="300">
-</picture>
-
 ## 它做什么
 
 ```
@@ -90,7 +85,7 @@
 
 抓取节奏按源 10–360 分钟不等，RSS 走 `ETag`/`Last-Modified` 条件请求，大部分轮次只收到 304。
 
-**境外信源怎么抓**：大陆网络下 Google 系被丢包、几家大站有 Cloudflare 托管挑战，本站用「直连白名单 + 本地代理出口」双通道解决——已实测能直连的主机走直连，只有必须出境的请求才走代理。做法与踩坑记录见 [`docs/deploy-termux.md`](docs/deploy-termux.md)。
+**在大陆网络里怎么抓境外源**：Google 系被丢包、几家大站还有 Cloudflare 托管挑战，所以 `EGRESS_PROXY_URL` 是必需的；但它是全局开关，直接全量绕道会让国内源变慢甚至抓不到。本站的做法是「已实测可直连的主机走直连（`DEPLOYMENT.directFetchHosts`）、只有必须出境的请求才走代理」，每次跳转按目标域名重新选路。见 [`docs/deploy.md`](docs/deploy.md) 的「在中国大陆的服务器上」。
 
 ## 快速开始
 
@@ -106,11 +101,9 @@ docker compose up -d --build        # http://localhost:3000，后台在 /admin
 
 开发时把 `COLLECT_ENABLED`、`MODEL_CALLS_ENABLED` 关掉，只跑本地数据。不用 Docker 的本机跑法与验收命令见 [`VULNHOT.md`](VULNHOT.md) 第 5 节。
 
-## 一台旧手机跑得动
+## 部署
 
-这个站现在跑在一台 **vivo V2111A / Android 11 / 8 核 7.5 GB 内存**的旧手机上：Termux 里 PostgreSQL 18 + api/worker/web 三个 Node 进程 + 一个本地模型网关，全部由 runit 守护；出网靠 Tailscale，公网靠 Cloudflare Tunnel 出站长连接（手机不开放任何入站端口）。内存占用约 3 GB，跑得动 99 个信源的采集、评分、归组和出刊。
-
-完整的手机部署、隧道与境外出口记录在 [`docs/deploy-termux.md`](docs/deploy-termux.md)；标准 Docker 部署见 [`docs/deploy.md`](docs/deploy.md)。
+`docker compose` 一把起（db / api / worker / web 四个容器），域名与 HTTPS、境外信源出口、升级与排错都在 [`docs/deploy.md`](docs/deploy.md)。
 
 ## 部署前必做的两件事
 
@@ -133,7 +126,6 @@ docker compose up -d --build        # http://localhost:3000，后台在 /admin
 | 文档 | 内容 |
 |---|---|
 | [`VULNHOT.md`](VULNHOT.md) | 本站自己的全部决定：读者定位、改动清单、信源复审、还差什么、怎么跑 |
-| [`docs/deploy-termux.md`](docs/deploy-termux.md) | 手机部署、Cloudflare Tunnel（免 Zero Trust）、境外信源出口、看门狗与备份 |
 | [`docs/deploy.md`](docs/deploy.md) | 标准 Docker 部署、升级、排错 |
 | [`docs/sources.md`](docs/sources.md) · [`docs/selection.md`](docs/selection.md) · [`docs/grouping.md`](docs/grouping.md) | 信源、精选门槛、事件归组的规则 |
 | [`AGENTS.md`](AGENTS.md) · [`docs/architecture.md`](docs/architecture.md) | 给 Agent 的约定与整体架构 |

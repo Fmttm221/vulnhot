@@ -280,7 +280,7 @@ test('deep reading returns to its anchor, including folded dates',async()=>{
   const context=await safari.newContext({viewport:{width:390,height:844}});
   const page=await context.newPage();
   try{
-    await visit(page,origin+'/?tag=long-reading');
+    await visit(page,origin+'/featured?tag=long-reading');
     await expect(page.locator('[data-card-key]')).toHaveCount(180);
     await page.getByRole('button',{name:'收起10月4日',exact:true}).click();
     await expect(page.locator('[data-card-key]')).toHaveCount(120);

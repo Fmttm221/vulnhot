@@ -96,12 +96,12 @@
 
 ---
 
-## 3. 信源清单（89 个：74 个已启用、15 个等凭据）
+## 3. 信源清单（99 个：75 个在跑、24 个暂停或等凭据）
 
 分级：`T1` 官方一手（CVE 登记库、CERT、厂商 PSIRT）· `T1_5` 厂商研究团队与准官方 · `T2` 媒体与个人。
 参与：`精选` = 进精选与全部动态；`热度` = 只作热度证据（Hacker News / Lobsters 的讨论帖）。
 
-**A. 已启用的 74 个**（其中 68 个在移植时逐个跑过真实采集器）
+**A. 已启用的 75 个**（其中 68 个在移植时逐个跑过真实采集器）
 
 | id | 名称 | 类型 | 分级 | 参与 | 间隔(分) | owner |
 |---|---|---|---|---|---|---|
@@ -260,6 +260,24 @@
 | `rss-darkreading` / `rss-xz-aliyun` / `rss-debian-dsa` / `rss-paper-seebug` / `rss-msrc-update-guide` | 0.62 M | 0 | 正文抽取 100% `unconfirmed`（付费墙/反爬），模型只能凭标题猜 |
 
 另外 `rss-sploitus` 的抓取间隔统一为 120 分钟（聚合器单价约 158k tokens / 条精选）。**这不是“永久删除”**：登记库的结构化价值（CVSS/EPSS/引用计数）继续由 `vuln-signals` 自己同步，不依赖它们产文章；抓取器按站点修好后可以重新启用。
+
+### 3.5 境外信源与出网代理
+
+大陆网络下有两类抓不到，原因不同、解法也不同：
+
+| 类型 | 站点 | 现象 | 解法 |
+|---|---|---|---|
+| GFW 丢包 | `security.googleblog.com`、`feeds.feedburner.com`、`r.jina.ai`、`api.telegram.org` | 超时 / connection reset | 任意非大陆出口 |
+| Cloudflare 托管挑战 | `bleepingcomputer.com`、`securityweek.com`、`therecord.media` | 403 + `cf-mitigated: challenge`，标题 `Just a moment...` | IP 信誉好的出口（住宅节点，或部分日本/台湾/美国机房节点） |
+| 工作量证明人机页 | `theregister.com` | 标题 `Are we human?` | 放弃，同题材由 Talos/ZDI/SANS/Krebs 覆盖 |
+
+现在的做法：Termux 里跑一个 mihomo 本地出口（`127.0.0.1:7890`），后端 `EGRESS_PROXY_URL` 指向它；
+同时把**已实测能直连的 60 个主机**写进 `site/site.ts` 的 `DEPLOYMENT.directFetchHosts`，只有必须出境的请求才走代理。
+这样机场流量只花在必须的地方，共享出口 IP 被限流也不影响主站。两个反例：`api.github.com` 走代理会被限流（403），
+`api.anquanke.com` 走代理直接连不上（000），所以它们必须在直连名单里。
+
+新增的信源（The Hacker News、BleepingComputer、SecurityWeek、The Record、Google Online Security Blog）都靠这条路抓。
+完整配置、节点钉选与看门狗见 [`docs/deploy-termux.md`](docs/deploy-termux.md)。
 
 ---
 

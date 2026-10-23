@@ -33,7 +33,7 @@ export function BarList({ items, emptyText = "这个窗口里还没有内容" }:
         return (
           <li key={item.key} className="block">
             {item.to
-              ? <Link to={item.to} className="block rounded-[var(--radius-control)] px-1 py-0.5 hover:bg-well">{row}</Link>
+              ? <Link to={item.to} className="block rounded-control px-1 py-0.5 hover:bg-well">{row}</Link>
               : <span className="block px-1 py-0.5">{row}</span>}
           </li>
         );

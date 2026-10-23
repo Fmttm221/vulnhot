@@ -95,12 +95,12 @@ export default function ObservatoryPage() {
             {window.label}窗口 · 信源 {sources.enabled}/{sources.total} 在跑 · 读者打开页面不调用模型
           </p>
         </div>
-        <nav className="flex flex-wrap items-center gap-1 rounded-[var(--radius-control)] border border-line bg-surface p-1" aria-label="时间窗口">
+        <nav className="flex flex-wrap items-center gap-1 rounded-control border border-line bg-surface p-1" aria-label="时间窗口">
           {WINDOWS.map((w) => (
             <Link
               key={w.hours}
               to={w.hours === 168 ? "/" : `/?window=${w.hours}`}
-              className={`rounded-[6px] px-2.5 py-1 text-[12px] transition-colors ${w.hours === hours ? "bg-accent-soft font-medium text-accent-ink" : "text-ink-3 hover:bg-well hover:text-ink"}`}
+              className={`rounded-mark px-2.5 py-1 text-[12px] transition-colors ${w.hours === hours ? "bg-accent-soft font-medium text-accent-ink" : "text-ink-3 hover:bg-well hover:text-ink"}`}
             >
               {w.label}
             </Link>
@@ -125,7 +125,7 @@ export default function ObservatoryPage() {
 
       {/* 流向图 + 分类分布 */}
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section className="min-w-0 rounded-[var(--radius-panel)] border border-line bg-surface">
+        <section className="min-w-0 rounded-panel border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">信源 → 分类</h2>
             <span className="text-[11px] text-ink-4">带宽按情报条数加权 · 悬停看具体流量</span>
@@ -141,7 +141,7 @@ export default function ObservatoryPage() {
           </div>
         </section>
 
-        <section className="min-w-0 rounded-[var(--radius-panel)] border border-line bg-surface">
+        <section className="min-w-0 rounded-panel border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">分类分布</h2>
             <span className="text-[11px] text-ink-4">共 {categories.length} 个分类</span>
@@ -159,7 +159,7 @@ export default function ObservatoryPage() {
 
       {/* 热点事件 + 最新精选 */}
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section className="rounded-[var(--radius-panel)] border border-line bg-surface">
+        <section className="rounded-panel border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">热点事件 Top {Math.min(8, entries.length)}</h2>
             <Link to="/hot" className="flex items-center gap-0.5 text-[11.5px] text-ink-4 hover:text-accent">
@@ -186,7 +186,7 @@ export default function ObservatoryPage() {
           </ol>
         </section>
 
-        <section className="rounded-[var(--radius-panel)] border border-line bg-surface">
+        <section className="rounded-panel border border-line bg-surface">
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
             <h2 className="text-[13px] font-semibold text-ink">最新精选</h2>
             <Link to="/featured" className="flex items-center gap-0.5 text-[11.5px] text-ink-4 hover:text-accent">

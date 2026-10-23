@@ -27,7 +27,7 @@ export function StatTile({ label, value, unit, hint, to, tone = "plain" }: {
       {hint && <span className="mt-1.5 block truncate text-[11px] text-ink-4">{hint}</span>}
     </>
   );
-  const shell = "flex min-w-0 flex-col rounded-[var(--radius-tile)] border border-line bg-surface px-3.5 py-3 transition-colors";
+  const shell = "flex min-w-0 flex-col rounded-tile border border-line bg-surface px-3.5 py-3 transition-colors";
   if (!to) return <div className={shell}>{body}</div>;
   return (
     <Link to={to} className={`${shell} hover:border-line-strong hover:bg-raised`}>

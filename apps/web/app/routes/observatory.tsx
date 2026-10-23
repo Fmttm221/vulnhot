@@ -6,7 +6,7 @@ import type { HotResponse, Observatory, SiteStats } from "@aihot/contracts/site"
 import { CATEGORY_LABELS, type CategoryKey } from "@aihot/contracts/taxonomy";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { pageMeta } from "../lib/seo";
+import { pageMeta, siteLd } from "../lib/seo";
 import { monthDayTime } from "../lib/format";
 import { StatTile } from "../features/observatory/StatTile";
 import { BarList, type BarItem } from "../features/observatory/BarList";
@@ -65,6 +65,8 @@ export function meta() {
     title: "观测台",
     description: "全球漏洞情报的聚合概览：信源到分类的流向、分类分布、热度曲线，以及现在最该看的几条。",
     path: "/",
+    // 首页承担站点级的机器描述（组织、站点、数据集）；精选页只加自己的条目清单。
+    jsonLd: siteLd(),
   });
 }
 

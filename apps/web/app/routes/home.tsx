@@ -3,7 +3,7 @@ import type { Route } from "./+types/home";
 import type { TimelineResponse } from "@aihot/contracts/site";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
-import { filterParams, hasFeedFilters, itemListLd, listPath, pageMeta, readFilters, siteLd } from "../lib/seo";
+import { filterParams, hasFeedFilters, itemListLd, listPath, pageMeta, readFilters } from "../lib/seo";
 import { inNav } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 import { Timeline } from "../features/feed/Timeline";
@@ -28,7 +28,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta({ loaderData }: Route.MetaArgs) {
   const path = listPath("/featured", loaderData ? filterParams(loaderData.filters) : {});
   const titles = loaderData?.data.cards.map((c) => c.item.title) ?? [];
-  return pageMeta({ path, noindex: hasFeedFilters(loaderData?.filters), jsonLd: path === "/featured" ? [...siteLd(), itemListLd("/featured", "精选", titles)] : undefined });
+  return pageMeta({ path, noindex: hasFeedFilters(loaderData?.filters), jsonLd: path === "/featured" ? [itemListLd("/featured", "精选", titles)] : undefined });
 }
 
 export default function Home() {

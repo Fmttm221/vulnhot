@@ -29,6 +29,8 @@ const api = createServer((req, res) => {
   res.setHeader("Content-Type", "application/json");
   const send = (value: unknown) => res.end(JSON.stringify(value));
   if (path === "/api/site/meta") return send({ changelogVersion: "fixture" });
+  // 首页是观测台：它必须读到的那一份给空数据（统计与热点页面自己当可选）。
+  if (path === "/api/site/observatory") return send({ generatedAt: at, windowHours: 168, totals: { items: 0, items24h: 0, selected: 0, stories: 0, kev: 0, dailies: 0 }, sources: { total: 0, enabled: 0, failing: 0 }, flow: [], categories: [], heat: [] });
   if (path === "/api/site/timeline") return send({ filters: readFilters(url.searchParams), cards: [{ key: item.id, anchorAt: at, item, group: null }], nextCursor: null, hot: null, dayCounts: { "2026-10-04": 1 } });
   if (path === "/api/site/pool") return send({ filters: { ...readFilters(url.searchParams), q: url.searchParams.get("q"), tab: url.searchParams.get("tab") ?? "time" }, items: [item], page: Number(url.searchParams.get("page") ?? 1), pageCount: 3, total: 100, todayCount: 1, freshness: at });
   if (path === `/api/site/items/${item.id}`) return send(detail);
@@ -57,7 +59,7 @@ function structured($: cheerio.CheerioAPI): Array<Record<string, unknown>> {
 }
 
 test("filtered feeds keep their exact content address but leave indexing to the public landing pages", async () => {
-  for (const base of ["/", "/all"]) for (const query of ["channel=news", "category=advisory", "tag=RCE", "channel=x&category=incident&tag=RCE"]) {
+  for (const base of ["/featured", "/all"]) for (const query of ["channel=news", "category=advisory", "tag=RCE", "channel=x&category=incident&tag=RCE"]) {
     const $ = await page(`${base}?${query}&utm_source=fixture&anchorAt=old&deep=1`);
     assert.equal($("meta[name=robots]").attr("content"), "noindex, follow", `${base}?${query}`);
     assert.equal($("link[rel=canonical]").attr("href"), `${web.origin}${base}?${query}`);
@@ -69,7 +71,7 @@ test("filtered feeds keep their exact content address but leave indexing to the 
 });
 
 test("ordinary feed pages remain indexable and normalize ignored parameters", async () => {
-  for (const [requested, canonical] of [["/?channel=invalid&category=invalid&tag=%20&utm_source=fixture", "/"], ["/all?channel=all&tab=relevance&anchorAt=old&page=2&utm_source=fixture", "/all?page=2"]]) {
+  for (const [requested, canonical] of [["/featured?channel=invalid&category=invalid&tag=%20&utm_source=fixture", "/featured"], ["/all?channel=all&tab=relevance&anchorAt=old&page=2&utm_source=fixture", "/all?page=2"]]) {
     const $ = await page(requested!);
     assert.equal($("meta[name=robots]").attr("content"), undefined);
     assert.equal($("link[rel=canonical]").attr("href"), `${web.origin}${canonical}`);

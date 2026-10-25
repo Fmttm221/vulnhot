@@ -1,3 +1,4 @@
+import { t as translate, ui } from "../../lib/i18n";
 // 信源 → 分类 的流向图：左边每个信源一条，右边每个分类一条，中间的带宽是「这个信源在这个分类里有多少条」。
 // 纯 SVG，不引入图表库；颜色取站点自己的主题变量，浅色深色都跟着变。
 import { useMemo, useState } from "react";
@@ -88,7 +89,7 @@ export function FlowDiagram({ links, labelOf, colorOf, emptyText }: {
     const kept = sortedSources.slice(0, MAX_SOURCES);
     const restTotal = sortedSources.slice(MAX_SOURCES).reduce((sum, [, n]) => sum + n, 0);
     const sourceRows = kept.map(([name, count]) => ({ key: name, label: name, count }));
-    if (restTotal > 0) sourceRows.push({ key: "__rest__", label: `其他 ${sortedSources.length - MAX_SOURCES} 个信源`, count: restTotal });
+    if (restTotal > 0) sourceRows.push({ key: "__rest__", label: translate("其他 {0} 个信源", [sortedSources.length - MAX_SOURCES]), count: restTotal });
 
     const total = sourceRows.reduce((sum, r) => sum + r.count, 0);
     const categories = [...byCategory.entries()]
@@ -118,7 +119,7 @@ export function FlowDiagram({ links, labelOf, colorOf, emptyText }: {
   }, [links, labelOf]);
 
   if (layout.total === 0) {
-    return <p className="px-4 py-14 text-center text-[12.5px] text-ink-4">{emptyText}</p>;
+    return <p className="px-4 py-14 text-center text-[12.5px] text-ink-4">{ui(emptyText)}</p>;
   }
 
   const leftRows = labelRows(layout.sourceNodes);
@@ -132,7 +133,7 @@ export function FlowDiagram({ links, labelOf, colorOf, emptyText }: {
 
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[680px] select-none" role="img" aria-label="信源到分类的流向图">
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[680px] select-none" role="img" aria-label={translate("信源到分类的流向图")}>
         {layout.paths.map((path, index) => {
           const sourceNode = layout.sourceNodes.find((n) => n.key === path.bucket);
           const categoryNode = layout.categoryNodes.find((n) => n.key === path.category);
@@ -154,7 +155,7 @@ export function FlowDiagram({ links, labelOf, colorOf, emptyText }: {
               onMouseLeave={() => setHover(null)}
               style={{ transition: "fill-opacity 120ms ease" }}
             >
-              <title>{`${path.bucket === "__rest__" ? "其他信源" : path.bucket} → ${labelOf(path.category)}：${path.count} 条`}</title>
+              <title>{translate("{0} → {1}：{2} 条", [path.bucket === "__rest__" ? "其他信源" : path.bucket, labelOf(path.category), path.count])}</title>
             </path>
           );
         })}
@@ -182,7 +183,7 @@ export function FlowDiagram({ links, labelOf, colorOf, emptyText }: {
               <rect x={RIGHT_X} y={node.y} width={BAR_W} height={node.h} rx={2} fill={colorOf(node.key)} />
               {anchored && <line x1={RIGHT_X + BAR_W + 4} y1={node.y + node.h / 2} x2={RIGHT_X + BAR_W + 8} y2={rowY} stroke="var(--line-strong)" strokeWidth="0.8" />}
               <text x={RIGHT_X + BAR_W + 10} y={rowY} fontSize={11.5} fill="var(--ink-2)" dominantBaseline="middle">
-                {node.label}
+                {ui(node.label)}
                 <tspan dx="4" fontSize={10.5} fill="var(--ink-4)" className="num">{node.count}</tspan>
               </text>
             </g>

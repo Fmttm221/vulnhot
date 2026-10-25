@@ -67,7 +67,7 @@ before(async()=>{
   // Started together; whatever started is stopped in after() even when another one failed.
   const started=await Promise.allSettled([
     startWebServer(api).then(w=>{web=w;origin=w.origin;}),
-    chromium.launch({channel:'chromium'}).then(b=>{chrome=b;}),
+    chromium.launch({channel: process.env.PLAYWRIGHT_CHANNEL || "chromium"}).then(b=>{chrome=b;}),
     webkit.launch().then(b=>{safari=b;}),
   ]);
   for(const result of started)if(result.status==='rejected')throw result.reason;
@@ -80,7 +80,7 @@ after(async()=>{
 // One engine per behaviour: WebKit for what phone readers do (iPhone Safari), Chromium for desktop-only
 // pointer behaviour such as hover and mouse presses. The router and caches are the same code in both.
 test('SSR list and visited query variants return offline without another read',async()=>{
-  const context=await safari.newContext({viewport:{width:390,height:844}});
+  const context=await safari.newContext({ locale: "zh-CN", viewport:{width:390,height:844}});
   const page=await context.newPage();
   try{
     await visit(page,origin+'/featured');
@@ -105,7 +105,7 @@ test('SSR list and visited query variants return offline without another read',a
 });
 
 test('hover downloads nothing, a press fetches article data once for its click, touches that move do not, and failed prefetch does not replace the current page',async()=>{
-  const context=await chrome.newContext();const page=await context.newPage();
+  const context=await chrome.newContext({ locale: "zh-CN" });const page=await context.newPage();
   const press={button:0,pointerType:'mouse',isPrimary:true};
   try{
     await visit(page,origin+'/featured');
@@ -118,7 +118,7 @@ test('hover downloads nothing, a press fetches article data once for its click, 
     assert.equal(hits.slice(start).filter(x=>x.startsWith('/api/site/items/')).length,0);
     await link.click();await expect(page.getByText('固定正文',{exact:true})).toBeVisible();
     assert.equal(hits.slice(start).filter(x=>x.startsWith('/api/site/items/')).length,1,'the click reuses the prefetch its press started');
-    const fresh=await chrome.newContext();const freshPage=await fresh.newPage();
+    const fresh=await chrome.newContext({ locale: "zh-CN" });const freshPage=await fresh.newPage();
     try{
       await visit(freshPage,origin+'/featured');failing='/api/site/items/navigation-fixture';
       const failed=freshPage.waitForResponse(r=>r.url().includes('/items/navigation-fixture.data')&&r.status()===503);
@@ -129,7 +129,7 @@ test('hover downloads nothing, a press fetches article data once for its click, 
 });
 
 test('SSR all-pages and report kinds return offline with their own content',async()=>{
-  const context=await chrome.newContext();const page=await context.newPage();
+  const context=await chrome.newContext({ locale: "zh-CN" });const page=await context.newPage();
   try{
     await visit(page,origin+'/all');
     await page.locator('a[href="/all?page=2"]').first().click();
@@ -147,7 +147,7 @@ test('SSR all-pages and report kinds return offline with their own content',asyn
 // A prefetch of the newly selected link must not be mistaken for an explicit refresh of that page.
 // Disable HTTP reuse here: otherwise the browser cache can hide a lost document-level result.
 test('a press on a selected link preserves visited data and the next revisit starts no data request',async()=>{
-  const context=await chrome.newContext();const page=await context.newPage();
+  const context=await chrome.newContext({ locale: "zh-CN" });const page=await context.newPage();
   const requests:string[]=[];
   await context.route('**/*.data*',route=>route.continue());
   page.on('request',request=>{if(request.url().includes('.data'))requests.push(request.url());});
@@ -169,7 +169,7 @@ test('a press on a selected link preserves visited data and the next revisit sta
 });
 
 test('a revisit never renews the original deadline; an expired read shows an error and a reload asks again',async()=>{
-  const context=await chrome.newContext();const page=await context.newPage();
+  const context=await chrome.newContext({ locale: "zh-CN" });const page=await context.newPage();
   try{
     await page.clock.install();ttl=1;
     await visit(page,origin+'/featured');
@@ -183,7 +183,7 @@ test('a revisit never renews the original deadline; an expired read shows an err
 });
 
 test('SSR freshness spent in an upstream cache is not renewed by HTML hydration',async()=>{
-  const context=await chrome.newContext();const page=await context.newPage();
+  const context=await chrome.newContext({ locale: "zh-CN" });const page=await context.newPage();
   try{
     ttl=0;await visit(page,origin+'/featured');
     await page.getByRole('link',{name:'性能检查文章',exact:true}).click();await expect(page.getByText('固定正文',{exact:true})).toBeVisible();
@@ -194,7 +194,7 @@ test('SSR freshness spent in an upstream cache is not renewed by HTML hydration'
 });
 
 test('Agent tabs finish offline with matching canonical; invalid direct tabs and anchored links keep a panel',async()=>{
-  const context=await chrome.newContext();const page=await context.newPage();
+  const context=await chrome.newContext({ locale: "zh-CN" });const page=await context.newPage();
   try{
     await visit(page,origin+'/agent');
     await context.setOffline(true);
@@ -221,7 +221,7 @@ test('Agent tabs finish offline with matching canonical; invalid direct tabs and
 });
 
 test('phone suggestions load only on opening, use one small read, retry failures and update on reopening',async()=>{
-  const context=await safari.newContext({viewport:{width:390,height:844}});const page=await context.newPage();
+  const context=await safari.newContext({ locale: "zh-CN", viewport:{width:390,height:844}});const page=await context.newPage();
   try{
     suggestionsVersion=1;await visit(page,origin+'/featured');
     assert.equal(hits.filter(x=>x==='/api/site/search/suggestions').length,0);
@@ -244,7 +244,7 @@ test('phone suggestions load only on opening, use one small read, retry failures
 });
 
 test('reader enhancements wait for visible code and update only the picture that loaded',async()=>{
-  const context=await safari.newContext({viewport:{width:390,height:844}});
+  const context=await safari.newContext({ locale: "zh-CN", viewport:{width:390,height:844}});
   const page=await context.newPage();
   const scripts:string[]=[];page.on('request',r=>{if(r.url().includes('/assets/')&&r.url().includes('highlight-'))scripts.push(r.url());});
   await page.route('**/reader-image/*.svg',route=>route.fulfill({contentType:'image/svg+xml',body:`<svg xmlns="http://www.w3.org/2000/svg" width="${route.request().url().endsWith('/tiny.svg')?16:640}" height="360"><rect width="640" height="360" fill="red"/></svg>`}));
@@ -277,7 +277,7 @@ test('reader enhancements wait for visible code and update only the picture that
 });
 
 test('deep reading returns to its anchor, including folded dates',async()=>{
-  const context=await safari.newContext({viewport:{width:390,height:844}});
+  const context=await safari.newContext({ locale: "zh-CN", viewport:{width:390,height:844}});
   const page=await context.newPage();
   try{
     await visit(page,origin+'/featured?tag=long-reading');

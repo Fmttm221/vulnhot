@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { Link, PrefetchPageLinks, UNSAFE_DataRouterContext, UNSAFE_FrameworkContext, useHref, useLocation, type LinkProps } from "react-router";
-import { hasFreshPage } from '../../lib/page-reuse';
+import { hasFreshPage, prefetchPage } from '../../lib/page-reuse';
 
 /**
  * Prefetches when the reader presses the link: a mouse or pen button going down, or a touch held
@@ -18,7 +18,7 @@ export function IntentLink({ onPointerDown, onTouchStart, onTouchMove, onTouchEn
   const context = useContext(UNSAFE_DataRouterContext);
   const framework = useContext(UNSAFE_FrameworkContext);
   // Router prefetch loads chunks but opts clientLoader routes out of data prefetch. Their
-  // serverLoader still reads this same single-fetch URL; prefetch it with the same browser TTL.
+  // serverLoader reads single-fetch data; keep it in this document, since localized responses are no-store.
   const target = new URL(href, 'http://page.local');
   const differentPage = target.pathname + target.search !== location.pathname + location.search;
   // Router prefetch also asks shouldRevalidate. A selected/remembered page needs neither its
@@ -29,9 +29,8 @@ export function IntentLink({ onPointerDown, onTouchStart, onTouchMove, onTouchEn
   const clients = shouldPrefetch && href.startsWith('/') && !href.startsWith('//')
     ? context?.router.match(href)?.filter(m => framework?.manifest.routes[m.route.id]?.hasLoader && framework.manifest.routes[m.route.id]?.hasClientLoader).map(m => m.route.id) ?? []
     : [];
-  target.hash = '';
-  target.pathname += target.pathname.endsWith('/') ? '_.data' : '.data';
-  target.searchParams.set('_routes', clients.join(','));
+  const routeId = clients.at(-1);
+  useEffect(() => { if (routeId) void prefetchPage(href, routeId); }, [href, routeId]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clear = () => {
     if (timer.current !== null) clearTimeout(timer.current);
@@ -54,5 +53,5 @@ export function IntentLink({ onPointerDown, onTouchStart, onTouchMove, onTouchEn
     onTouchMove={(e) => { onTouchMove?.(e); cancel(); }}
     onTouchEnd={(e) => { onTouchEnd?.(e); cancel(); }}
     onTouchCancel={(e) => { onTouchCancel?.(e); cancel(); }}
-  />{shouldPrefetch && <PrefetchPageLinks page={href} />}{clients.length > 0 && <link rel="prefetch" as="fetch" href={target.pathname + target.search} />}</>;
+  />{shouldPrefetch && <PrefetchPageLinks page={href} />}</>;
 }

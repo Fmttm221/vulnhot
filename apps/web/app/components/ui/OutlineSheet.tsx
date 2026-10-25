@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 // An outline as a bottom sheet (phones): an article's headings, a report's pages. The section being read
 // is marked, and choosing one scrolls there.
 import { useCurrentSection } from "../../lib/motion";
@@ -14,7 +15,7 @@ export interface OutlineEntry {
   note?: string;
 }
 
-export function OutlineSheet({ open, onClose, outline, title = "目录" }: { open: boolean; onClose: () => void; outline: OutlineEntry[]; title?: string }) {
+export function OutlineSheet({ open, onClose, outline, title = translate("目录") }: { open: boolean; onClose: () => void; outline: OutlineEntry[]; title?: string }) {
   const [current, go] = useCurrentSection(outline.map((o) => o.id), open);
   let n = 0;
   return (
@@ -39,7 +40,7 @@ export function OutlineSheet({ open, onClose, outline, title = "目录" }: { ope
               >
                 {top && <span className={`mono w-5 shrink-0 text-[13px] ${on ? "font-bold" : "text-ink-4"}`}>{mark}</span>}
                 <span className={`min-w-0 flex-1 leading-[1.45] ${top ? "text-[15.5px]" : "text-[14px]"} ${on ? "font-semibold" : top ? "text-ink-2" : "text-ink-3"}`}>{o.text}</span>
-                {on ? <span className="shrink-0 text-[11.5px] font-semibold">正在读</span> : o.note && <span className="num shrink-0 text-[12px] text-ink-4">{o.note}</span>}
+                {on ? <span className="shrink-0 text-[11.5px] font-semibold">{translate("正在读")}</span> : o.note && <span className="num shrink-0 text-[12px] text-ink-4">{o.note}</span>}
               </a>
             </li>
           );

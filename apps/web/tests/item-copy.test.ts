@@ -15,11 +15,11 @@ test("in WeChat, 复制 Markdown copies the article without the async clipboard"
       return res.end(markdown);
     }
   });
-  const browser = await chromium.launch({ channel: "chromium" });
+  const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" });
   let web: WebServer | undefined;
   try {
     web = await startWebServer(api);
-    const context = await browser.newContext({
+    const context = await browser.newContext({ locale: "zh-CN",
       viewport: { width: 1366, height: 900 },
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.50",
     });

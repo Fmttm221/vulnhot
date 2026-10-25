@@ -1,3 +1,4 @@
+import { ui } from "./i18n.ts";
 // Page metadata from one place: title template, canonical address, OG images, robots; and list addresses,
 // with the feed filters they carry. The site's name and wording come from site/site.ts;
 //; its address from SITE_URL.
@@ -5,6 +6,7 @@ import type { MetaDescriptor } from "react-router";
 import { REPORT_NAMES, reportDateLabel, type ReportDetail, type StoryDetail, type TimelineFilters } from "@aihot/contracts/site";
 import { isCategoryKey, isChannelKey } from "@aihot/contracts/taxonomy";
 import { SITE, subjectAfter, withSubject } from "@aihot/site";
+import { currentLocale } from './locale.ts';
 
 /**
  * The site's address: SITE_URL while rendering on the server (what crawlers and share previews read),
@@ -71,9 +73,11 @@ export function titled(title: string): string {
 }
 
 export function pageMeta(input: PageMetaInput): MetaDescriptor[] {
+  const editorial = /^\/(?:items|story|daily|weekly|monthly)\/.+/.test(input.path);
+  const pageTitle = editorial ? input.title : ui(input.title);
   const base = siteUrl();
-  const title = input.title ? (input.rawTitle ? input.title : titled(input.title)) : HOME_TITLE;
-  const description = input.description ?? SITE_DESCRIPTION;
+  const title = pageTitle ? (input.rawTitle ? pageTitle : titled(pageTitle)) : ui(HOME_TITLE);
+  const description = editorial && input.description ? input.description : ui(input.description ?? SITE_DESCRIPTION);
   const url = `${base}${input.path}`;
   const image = input.image ? (input.image.startsWith("http") ? input.image : `${base}${input.image}`) : `${base}/og/site.png`;
   const tags: MetaDescriptor[] = [
@@ -82,15 +86,15 @@ export function pageMeta(input: PageMetaInput): MetaDescriptor[] {
     { tagName: "link", rel: "canonical", href: url },
     { property: "og:site_name", content: SITE.name },
     { property: "og:type", content: input.type ?? "website" },
-    { property: "og:title", content: input.title ?? HOME_TITLE },
+    { property: "og:title", content: pageTitle ?? ui(HOME_TITLE) },
     { property: "og:description", content: description },
     { property: "og:url", content: url },
     { property: "og:image", content: image },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
-    { property: "og:locale", content: SITE.locale.replace("-", "_") },
+    { property: "og:locale", content: currentLocale() === 'en' ? 'en_US' : 'zh_CN' },
     { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:title", content: input.title ?? HOME_TITLE },
+    { name: "twitter:title", content: pageTitle ?? ui(HOME_TITLE) },
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: image },
   ];
@@ -155,8 +159,8 @@ export function siteLd() {
       "@context": "https://schema.org",
       "@type": "Dataset",
       "@id": `${base}/#dataset`,
-      name: `${SITE.name} — ${withSubject("行业动态数据集")}`,
-      description: `${subjectAfter("持续更新的中文", "行业动态")}：每条附中文摘要、评分与原文出处，${subjectAfter("另有每日精选与", "日报")}，可通过 RSS 与公开 API 获取。`,
+      name: `${SITE.name} — ${ui(withSubject("行业动态数据集"))}`,
+      description: `${ui(subjectAfter("持续更新的中文", "行业动态"))}：每条附中文摘要、评分与原文出处，${ui(subjectAfter("另有每日精选与", "日报"))}，可通过 RSS 与公开 API 获取。`,
       url: base,
       inLanguage: SITE.locale,
       isAccessibleForFree: true,
@@ -167,9 +171,9 @@ export function siteLd() {
       distribution: [
         { "@type": "DataDownload", name: "精选 RSS", encodingFormat: "application/rss+xml", contentUrl: `${base}/feed.xml` },
         { "@type": "DataDownload", name: "全部动态 RSS", encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/all.xml` },
-        { "@type": "DataDownload", name: `${withSubject("日报")} RSS`, encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/daily.xml` },
-        { "@type": "DataDownload", name: `${withSubject("周报")} RSS`, encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/weekly.xml` },
-        { "@type": "DataDownload", name: `${withSubject("月报")} RSS`, encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/monthly.xml` },
+        { "@type": "DataDownload", name: `${ui(withSubject("日报"))} RSS`, encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/daily.xml` },
+        { "@type": "DataDownload", name: `${ui(withSubject("周报"))} RSS`, encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/weekly.xml` },
+        { "@type": "DataDownload", name: `${ui(withSubject("月报"))} RSS`, encodingFormat: "application/rss+xml", contentUrl: `${base}/feed/monthly.xml` },
         { "@type": "DataDownload", name: "公开 API v1", encodingFormat: "application/json", contentUrl: `${base}/api/v1/items` },
         { "@type": "DataDownload", name: "OpenAPI", encodingFormat: "application/json", contentUrl: `${base}/openapi-v1.json` },
       ],
@@ -236,7 +240,7 @@ export function archiveLd(path: string, name: string, entries: Array<{ path: str
 /** An issue's Chinese date and actual editorial lead, falling back only to a still-public visible highlight. */
 export function reportTitle(report: ReportDetail): string {
   const lead = report.lead?.title.trim() || report.highlights.find((item) => item.available)?.title.trim();
-  const name = `${withSubject(REPORT_NAMES[report.kind])}｜${reportDateLabel(report.kind, report.key)}`;
+  const name = `${ui(withSubject(REPORT_NAMES[report.kind]))}｜${reportDateLabel(report.kind, report.key)}`;
   return lead ? `${name}：${lead}` : name;
 }
 

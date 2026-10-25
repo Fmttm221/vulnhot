@@ -37,7 +37,7 @@ test("origin-form slashes keep the router's homepage and unknown-route semantics
       const res = await raw(path, method);
       assert.equal(res.status, 200, `${method} ${path}: ${web.logs()}`);
       assert.equal(res.headers["content-type"], home.headers["content-type"]);
-      assert.match(res.headers["cache-control"] ?? "", /^public, max-age=\d+, s-maxage=\d+, must-revalidate$/);
+      assert.equal(res.headers["cache-control"], "private, no-store");
       if (method === "HEAD") assert.equal(res.body, "");
     }
     for (const path of ["/unknown-page", "//unknown-page", "//evil.invalid/unknown-page", "//unknown-page.data?token=private"]) {

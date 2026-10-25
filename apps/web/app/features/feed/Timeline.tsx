@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 // The 精选 home's day-grouped feed: a time rail with cards on desktop, rows under grey day bars on phones.
 // Keeps its place across back navigation and loads further pages. There is no "new items" prompt:
 // readers refresh for the latest head — on phones also by tapping the tab again. The paged lists
@@ -11,7 +12,8 @@ import { FeedItem } from "./FeedItem";
 import { IconChevronDown } from "../../components/icons";
 import { RingMark } from "@aihot/site/brand/Logo.tsx";
 import { EmptyState } from "../../components/ui/Page";
-import { beijingDate, beijingTime, beijingWeekday, monthDay } from "@aihot/contracts/time";
+import { beijingDate, beijingTime } from "@aihot/contracts/time";
+import { displayWeekday as beijingWeekday, displayMonthDay as monthDay } from "../../lib/format";
 import { byBeijingDay, weekdayShort } from "../../lib/format";
 import { isHydrated } from "../../lib/hydration";
 import { markRead, useReadSet } from "../../lib/local-state";
@@ -46,15 +48,14 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside, aside
   const short = weekdayShort(day);
   const phoneRow = (
     <>
-      <span className="text-[14px] font-bold text-ink">{day === today ? "今天" : date}</span>
+      <span className="text-[14px] font-bold text-ink">{day === today ? translate("今天") : date}</span>
       {day === today && <span className="text-[12.5px] text-ink-4">{date}</span>}
       <span className="text-[12.5px] text-ink-4">{short}</span>
       <span className="ml-auto flex items-center gap-1 text-[12.5px] text-ink-4">
         {asideOnPhone && aside}
         {count !== null && (
           <span>
-            <span className="num">{count}</span> 条
-          </span>
+            <span className="num">{count}</span>{translate("条")}</span>
         )}
         {onToggle && <IconChevronDown size={15} className={`transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`} />}
       </span>
@@ -64,7 +65,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside, aside
     <div className="bleed sticky top-[var(--bar-h)] z-20 bg-daybar lg:mx-0 lg:bg-bg lg:px-0">
       {/* Phones: a full-width day bar; on the timeline the whole bar folds the day. */}
       {onToggle ? (
-        <button type="button" onClick={onToggle} aria-expanded={!collapsed} aria-label={`${collapsed ? "展开" : "收起"}${date}`} className="flex h-11 w-full items-center gap-2 text-left lg:hidden">
+        <button type="button" onClick={onToggle} aria-expanded={!collapsed} aria-label={`${collapsed ? translate("展开") : translate("收起")}${date}`} className="flex h-11 w-full items-center gap-2 text-left lg:hidden">
           {phoneRow}
         </button>
       ) : (
@@ -84,7 +85,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside, aside
             type="button"
             onClick={onToggle}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? `展开${date}` : `收起${date}`}
+            aria-label={collapsed ? translate("展开{0}", [date]) : translate("收起{0}", [date])}
             className="grid size-6 place-items-center justify-self-center rounded-full text-ink-4 transition-colors hover:bg-bg-sunk hover:text-ink"
           >
             <IconChevronDown size={14} className={`transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`} />
@@ -95,8 +96,7 @@ export function DayHeader({ day, today, count, collapsed, onToggle, aside, aside
           {count !== null && (
             <>
               {" · "}
-              <span className="num">{count}</span> 条
-            </>
+              <span className="num">{count}</span>{translate("条")}</>
           )}
         </span>
         {aside && <span className="ml-auto text-[12px] text-ink-4">{aside}</span>}
@@ -299,9 +299,7 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
 
   let order = 0;
   const unreadToggle = (
-    <ToggleChip on={unreadOnly} onToggle={() => setState((s) => ({ ...s, unreadOnly: !s.unreadOnly }))}>
-      只看未读
-    </ToggleChip>
+    <ToggleChip on={unreadOnly} onToggle={() => setState((s) => ({ ...s, unreadOnly: !s.unreadOnly }))}>{translate("只看未读")}</ToggleChip>
   );
   return (
     <div className="relative">
@@ -312,12 +310,12 @@ export function Timeline({ initial, filters }: { initial: TimelineResponse; filt
         <div className="lg:card">
           {unreadOnly ? (
             state.nextCursor ? (
-              <EmptyState title="这批精选都读过了">点下方的按钮，继续找更早的未读精选。</EmptyState>
+              <EmptyState title={translate("这批精选都读过了")}>{translate("点下方的按钮，继续找更早的未读精选。")}</EmptyState>
             ) : (
-              <EmptyState title="没有未读的精选内容">关掉「只看未读」可以看到全部内容。</EmptyState>
+              <EmptyState title={translate("没有未读的精选内容")}>{translate("关掉「只看未读」可以看到全部内容。")}</EmptyState>
             )
           ) : (
-            <EmptyState title="这个筛选下还没有精选内容">换个类别看看，或者去全部动态里找找。</EmptyState>
+            <EmptyState title={translate("这个筛选下还没有精选内容")}>{translate("换个类别看看，或者去全部动态里找找。")}</EmptyState>
           )}
         </div>
       )}
@@ -358,20 +356,15 @@ function FeedEnd({ loading, error, hasMore, manual, empty, onMore }: { loading: 
     <div className="flex justify-center py-6">
       {loading ? (
         <span className="inline-flex items-center gap-2 text-[12.5px] text-ink-4">
-          <RingMark className="size-4 text-accent" spinning /> 正在加载
-        </span>
+          <RingMark className="size-4 text-accent" spinning />{translate("正在加载")}</span>
       ) : error ? (
-        <button type="button" onClick={onMore} className="h-9 rounded-full border border-hot/30 px-4 text-[13px] text-hot hover:bg-hot-soft">
-          加载失败，点此重试
-        </button>
+        <button type="button" onClick={onMore} className="h-9 rounded-full border border-hot/30 px-4 text-[13px] text-hot hover:bg-hot-soft">{translate("加载失败，点此重试")}</button>
       ) : hasMore ? (
         manual && (
-          <button type="button" onClick={onMore} className="h-9 rounded-full border border-line-strong bg-surface px-5 text-[13px] font-medium text-ink-2 transition-colors hover:border-ink-4 hover:text-ink">
-            加载更多
-          </button>
+          <button type="button" onClick={onMore} className="h-9 rounded-full border border-line-strong bg-surface px-5 text-[13px] font-medium text-ink-2 transition-colors hover:border-ink-4 hover:text-ink">{translate("加载更多")}</button>
         )
       ) : (
-        !empty && <span className="text-[12px] text-ink-4">已经到底了</span>
+        !empty && <span className="text-[12px] text-ink-4">{translate("已经到底了")}</span>
       )}
     </div>
   );

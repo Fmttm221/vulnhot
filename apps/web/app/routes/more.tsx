@@ -1,6 +1,7 @@
+import { t as translate, ui, uiCopy } from "../lib/i18n";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouteLoaderData } from "react-router";
-import { POLICY, SITE } from "@aihot/site";
+import { POLICY as SOURCE_POLICY, SITE as SOURCE_SITE } from "@aihot/site";
 import type { loader as rootLoader } from "../root";
 import { useChangelogDot } from "../components/shell/Sidebar";
 import { PhoneBar } from "../components/shell/PhoneBar";
@@ -12,8 +13,10 @@ import { pageMeta } from "../lib/seo";
 import { setFontPreference, useFontPreference, useStarred } from "../lib/local-state";
 import { Select } from "../components/ui/Controls";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
+import { LanguageSwitch } from '../components/shell/LanguageSwitch';
 import { Filings } from "../components/shell/Filings";
 import { IconBookmark, IconChevronRight, IconGithub, IconGrid, IconHeart, IconMessage, IconMoon, IconPlug, IconSparkles } from "../components/icons";
+
 
 export const handle: Screen = { tab: "me", name: "我的" };
 
@@ -22,7 +25,7 @@ export function headers() {
 }
 
 export function meta() {
-  return pageMeta({ title: "我的", path: "/more", noindex: true });
+  return pageMeta({ title: translate("我的"), path: "/more", noindex: true });
 }
 
 /**
@@ -37,8 +40,8 @@ const agentWays = () => [...webModules().flatMap((m) => m.agentWays ?? []), "MCP
 /** The modules' tools first, then the engine's. */
 const tools = (): Row[] => [
   ...webModules().flatMap((m) => m.tools ?? []),
-  ...(inNav("/topics") ? [{ to: "/topics", label: "主题", icon: <IconGrid size={20} /> }] : []),
-  { to: "/agent", label: "Agent 接入", icon: <IconPlug size={20} />, detail: agentWays().slice(0, 3).join(" · ") },
+  ...(inNav("/topics") ? [{ to: "/topics", label: translate("主题"), icon: <IconGrid size={20} /> }] : []),
+  { to: "/agent", label: translate("Agent 接入"), icon: <IconPlug size={20} />, detail: agentWays().slice(0, 3).join(" · ") },
 ];
 
 function Group({ title, children }: { title?: string; children: ReactNode }) {
@@ -56,8 +59,8 @@ function RowLink({ row, dot = false }: { row: Row; dot?: boolean }) {
       <Link viewTransition to={row.to} className="flex min-h-[52px] items-center gap-3 px-4 text-[16px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk">
         <span className="text-ink-3">{row.icon}</span>
         <span className="flex flex-1 items-center gap-2">
-          {row.label}
-          {dot && <span className="size-[7px] rounded-full bg-hot" aria-label="有新的更新" />}
+          {ui(row.label)}
+          {dot && <span className="size-[7px] rounded-full bg-hot" aria-label={translate("有新的更新")} />}
         </span>
         {row.detail && <span className="text-[14px] font-normal text-ink-4">{row.detail}</span>}
         <IconChevronRight size={16} className="text-ink-4" />
@@ -67,6 +70,8 @@ function RowLink({ row, dot = false }: { row: Row; dot?: boolean }) {
 }
 
 export default function MorePage() {
+  const POLICY = uiCopy(SOURCE_POLICY);
+  const SITE = uiCopy(SOURCE_SITE);
   const root = useRouteLoaderData<typeof rootLoader>("root");
   const changelogDot = useChangelogDot(root?.changelogVersion ?? null);
   const starred = useStarred();
@@ -76,33 +81,34 @@ export default function MorePage() {
   useEffect(() => setHere(true), []);
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
-      <PhoneBar title="我的" large />
-      <h1 className="hidden pb-4 pt-1 text-[22px] font-bold text-ink lg:block">我的</h1>
+      <PhoneBar title={translate("我的")} large />
+      <h1 className="hidden pb-4 pt-1 text-[22px] font-bold text-ink lg:block">{translate("我的")}</h1>
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4 2xl:grid-cols-3">
         <Group>
-          <RowLink row={{ to: "/starred", label: "收藏", icon: <IconBookmark size={20} />, detail: here && starred.length > 0 ? <span className="num">{starred.length}</span> : undefined }} />
+          <li className="flex min-h-[56px] flex-wrap items-center justify-between gap-3 px-4 py-2 text-[16px] font-medium text-ink"><span>{translate("界面语言")}</span><LanguageSwitch /></li>
+          <RowLink row={{ to: "/starred", label: translate("收藏"), icon: <IconBookmark size={20} />, detail: here && starred.length > 0 ? <span className="num">{starred.length}</span> : undefined }} />
           <li className="flex min-h-[56px] items-center gap-3 px-4 text-[16px] font-medium text-ink">
             <span className="text-ink-3">
               <IconMoon size={20} />
             </span>
-            <span className="flex-1">外观</span>
+            <span className="flex-1">{translate("外观")}</span>
             <ThemeSwitch className="w-[126px]" />
           </li>
           <li className="flex min-h-[56px] items-center gap-3 px-4 text-[16px] font-medium text-ink">
             <span className="w-5 text-center text-ink-3" aria-hidden="true">Aa</span>
-            <span className="flex-1">字体</span>
-            <Select aria-label="字体" value={font ?? "system"} onChange={(e) => setFontPreference(e.target.value === "browser" ? "browser" : null)}>
-              <option value="system">默认字体</option>
-              <option value="browser">浏览器默认字体</option>
+            <span className="flex-1">{translate("字体")}</span>
+            <Select aria-label={translate("字体")} value={font ?? "system"} onChange={(e) => setFontPreference(e.target.value === "browser" ? "browser" : null)}>
+              <option value="system">{translate("默认字体")}</option>
+              <option value="browser">{translate("浏览器默认字体")}</option>
             </Select>
           </li>
         </Group>
-        <Group title="工具与入口">
+        <Group title={translate("工具与入口")}>
           {tools().map((r) => (
             <RowLink key={r.to} row={r} />
           ))}
         </Group>
-        <Group title="关于">
+        <Group title={translate("关于")}>
           {SITE.github && (
             <li>
               <a
@@ -112,22 +118,21 @@ export default function MorePage() {
                 className="flex min-h-[52px] items-center gap-3 px-4 text-[16px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk"
               >
                 <span className="text-ink-3"><IconGithub size={20} /></span>
-                <span className="flex flex-1 items-center gap-2">GitHub 开源仓库</span>
-                <span className="text-[14px] font-normal text-ink-4">点个 Star 支持</span>
+                <span className="flex flex-1 items-center gap-2">{translate("GitHub 开源仓库")}</span>
                 <IconChevronRight size={16} className="text-ink-4" />
               </a>
             </li>
           )}
-          <RowLink row={{ to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={20} /> }} />
-          <RowLink row={{ to: "/changelog", label: "更新日志", icon: <IconSparkles size={20} /> }} dot={changelogDot} />
-          <RowLink row={{ to: "/feedback", label: "意见反馈", icon: <IconMessage size={20} /> }} />
+          <RowLink row={{ to: "/about", label: translate("关于 {0}", [SITE.name]), icon: <IconHeart size={20} /> }} />
+          <RowLink row={{ to: "/changelog", label: translate("更新日志"), icon: <IconSparkles size={20} /> }} dot={changelogDot} />
+          <RowLink row={{ to: "/feedback", label: translate("意见反馈"), icon: <IconMessage size={20} /> }} />
         </Group>
       </div>
       <div className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[12px] leading-[2] text-ink-4">
         <Link viewTransition to="/terms" className="hover:text-ink-2">{POLICY.terms.name}</Link>
-        <Link viewTransition to="/privacy" className="hover:text-ink-2">隐私说明</Link>
+        <Link viewTransition to="/privacy" className="hover:text-ink-2">{translate("隐私说明")}</Link>
         <a href="/feed.xml" className="hover:text-ink-2">RSS</a>
-        {SITE.github && <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="hover:text-ink-2">GitHub 开源</a>}
+        {SITE.github && <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="hover:text-ink-2">{translate("GitHub 开源")}</a>}
         <Filings className="hover:text-ink-2" badgeSize={13} />
       </div>
     </div>

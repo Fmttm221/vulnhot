@@ -1,14 +1,46 @@
 // Public pages already rendered in this document can be revisited until their server deadline.
 // Nothing persists across a document reload; list snapshots separately own the reader's position.
-import type { ClientLoaderFunctionArgs, ShouldRevalidateFunction } from 'react-router';
+import { UNSAFE_decodeViaTurboStream, type ClientLoaderFunctionArgs, type ShouldRevalidateFunction } from 'react-router';
+import { currentLocale } from './locale.ts';
 
 const pages = new Map<string, unknown>();
+const pending = new Map<string, Promise<unknown>>();
 const MAX_PAGES = 16;
 const addressOf = (url: URL) => url.pathname + url.search;
 const deadlineOf = (value: unknown) => (value as { expiresAt?: number } | null)?.expiresAt ?? 0;
 
 export function hasFreshPage(url: URL): boolean {
-  return deadlineOf(pages.get(addressOf(url))) > Date.now();
+  return deadlineOf(pages.get(`${currentLocale()}:${addressOf(url)}`)) > Date.now();
+}
+
+function remember(key: string, value: unknown) {
+  pages.delete(key);
+  pages.set(key, value);
+  if (pages.size > MAX_PAGES) pages.delete(pages.keys().next().value!);
+}
+
+/** Private/no-store responses cannot use browser HTTP prefetch. Reuse a press's
+ * loader data inside this document instead, bounded by the API's original deadline. */
+export function prefetchPage(address: string, routeId: string): Promise<unknown> {
+  const url = new URL(address, window.location.href);
+  const held = `${currentLocale()}:${addressOf(url)}`;
+  if (hasFreshPage(url)) return Promise.resolve(pages.get(held));
+  const active = pending.get(held);
+  if (active) return active;
+  url.hash = '';
+  url.pathname += url.pathname.endsWith('/') ? '_.data' : '.data';
+  url.searchParams.set('_routes', routeId);
+  const task = (async () => {
+    const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!response.ok || !response.body) return;
+    const { value } = await UNSAFE_decodeViaTurboStream(response.body, window);
+    const result = (value as Record<string, { data?: unknown }>)[routeId]?.data;
+    if (deadlineOf(result) <= Date.now()) return;
+    remember(held, result);
+    return result;
+  })().catch(() => undefined).finally(() => pending.delete(held));
+  pending.set(held, task);
+  return task;
 }
 
 /**
@@ -18,19 +50,23 @@ export function hasFreshPage(url: URL): boolean {
  * By default every address has its own.
  */
 export function pageReuse<T>(key: (url: URL) => string = addressOf) {
+  const localizedKey = (url: URL) => `${currentLocale()}:${key(url)}`;
   async function clientLoader({ request, serverLoader }: ClientLoaderFunctionArgs) {
-    const held = key(new URL(request.url));
-    const previous = pages.get(held);
+    const url = new URL(request.url);
+    const held = localizedKey(url);
+    const pressed = `${currentLocale()}:${addressOf(url)}`;
+    let previous = pages.get(held) ?? pages.get(pressed);
+    const pressing = pending.get(pressed);
+    if (!previous && pressing) previous = await pressing;
     pages.delete(held);
     if (deadlineOf(previous) > Date.now()) {
-      pages.set(held, previous);
+      remember(held, previous);
       return previous as Awaited<ReturnType<typeof serverLoader<T>>>;
     }
     // On hydration this is the HTML's own result, without another HTTP request.
     const result = await serverLoader<T>();
     if (!request.signal.aborted && deadlineOf(result) > Date.now()) {
-      pages.set(held, result);
-      if (pages.size > MAX_PAGES) pages.delete(pages.keys().next().value!);
+      remember(held, result);
     }
     return result;
   }
@@ -38,7 +74,7 @@ export function pageReuse<T>(key: (url: URL) => string = addressOf) {
 
   const shouldRevalidate: ShouldRevalidateFunction = ({ currentUrl, nextUrl, defaultShouldRevalidate }) => {
     // Revalidator/retry, or tapping the current page again: ask for its data normally.
-    if (defaultShouldRevalidate && addressOf(currentUrl) === addressOf(nextUrl)) pages.delete(key(nextUrl));
+    if (defaultShouldRevalidate && addressOf(currentUrl) === addressOf(nextUrl)) pages.delete(localizedKey(nextUrl));
     // Moving between addresses that share a result still runs the loader, which keeps the result while it is fresh.
     return defaultShouldRevalidate || key(currentUrl) === key(nextUrl);
   };

@@ -1,4 +1,5 @@
-import { REPORTS, SITE } from "@aihot/site";
+import { t as translate, uiCopy, ui } from "../lib/i18n";
+import { REPORTS as SOURCE_REPORTS, SITE as SOURCE_SITE } from "@aihot/site";
 import { Link, redirect, useLoaderData } from "react-router";
 import type { Route } from "./+types/topic";
 import type { TopicPage } from "@aihot/contracts/site";
@@ -9,13 +10,15 @@ import { DayList, Pagination } from "../features/feed/DayList";
 import { BrandMark } from "../components/BrandMark";
 import { EmptyState } from "../components/ui/Page";
 import { IconArrowLeft } from "../components/icons";
-import { beijingDate, monthDay } from "@aihot/contracts/time";
+import { beijingDate } from "@aihot/contracts/time";
+import { displayMonthDay as monthDay } from "../lib/format";
 import { monthDayTime } from "../lib/format";
 import { PhoneBar } from "../components/shell/PhoneBar";
 import { navUp } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 import type { TopicPagePart } from "../modules";
 import { loadParts } from "../site-modules";
+
 
 // Topics are reached from the topics page, as long as the site shows it.
 const UP = navUp("/topics");
@@ -51,22 +54,23 @@ function description(data: TopicPage, parts: Part[]): string {
   const { topic } = data;
   let text = topic.definition;
   const news = parts.flatMap((p) => p.news(p.data)).slice(0, 2).map((title) => title.replace(/[。.]$/u, "")).join("；");
-  if (news && topic.latest) text = `${monthDay(beijingDate(topic.latest.at))}更新：${news}。${topic.definition}`;
+  if (news && topic.latest) text = translate("{0}更新：{1}。{2}", [monthDay(beijingDate(topic.latest.at)), news, topic.definition]);
   return text.length > 150 ? `${text.slice(0, 149)}…` : text;
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: titled("主题不存在") }, { name: "robots", content: "noindex" }];
+  const SITE = uiCopy(SOURCE_SITE);
+  if (!loaderData) return [{ title: titled(translate("主题不存在")) }, { name: "robots", content: "noindex" }];
   const data = loaderData.data;
   const { topic, page } = data;
   const parts = partsOf(data);
   const path = page > 1 ? `/topics/${topic.slug}/page/${page}` : `/topics/${topic.slug}`;
-  const text = page > 1 ? `${topic.name}的精选归档第 ${page} 页。${topic.definition}` : description(data, parts);
+  const text = page > 1 ? translate("{0}的精选归档第 {1} 页。{2}", [topic.name, page, topic.definition]) : description(data, parts);
   const crumbs = breadcrumbLd([{ name: SITE.name, path: "/" }, ...UP.crumbs, { name: topic.name, path: `/topics/${topic.slug}` }]);
   return pageMeta({
     title: page > 1
-      ? `${topic.name} 精选 · 第 ${page} 页`
-      : `${topic.name} 最新动态${parts.length ? `与${parts.map((p) => p.name).join("、")}` : ""}`,
+      ? translate("{0} 精选 · 第 {1} 页", [topic.name, page])
+      : translate("{0} 最新动态{1}", [topic.name, parts.length ? `与${parts.map((p) => p.name).join("、")}` : ""]),
     description: text,
     path,
     image: `/og/topics/${topic.slug}.png`,
@@ -76,7 +80,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
       : [
           topicLd({
             path,
-            name: `${topic.name} 最新动态`,
+            name: translate("{0} 最新动态", [topic.name]),
             description: text,
             dateModified: topic.latest?.at ?? null,
             lists: parts.map((p) => ({ name: p.name, entries: p.entries(p.data) })),
@@ -87,6 +91,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 export default function TopicRoute() {
+  const REPORTS = uiCopy(SOURCE_REPORTS);
   const { data } = useLoaderData<typeof loader>();
   const { topic, items, page, pageCount, pageSize } = data;
   const parts = partsOf(data);
@@ -95,9 +100,9 @@ export default function TopicRoute() {
   const last = first + items.length - 1;
   return (
     <div className="pb-6">
-      <PhoneBar back={{ to: UP.to, label: UP.back }} title={topic.name} />
+      <PhoneBar back={{ to: UP.to, label: UP.back }} title={ui(topic.name)} />
       <Link to={UP.to} className="hidden items-center gap-1.5 py-2 text-[13px] text-ink-3 transition-colors hover:text-accent lg:inline-flex">
-        <IconArrowLeft size={14} /> 返回{UP.back}
+        <IconArrowLeft size={14} />{translate("返回")}{UP.back}
       </Link>
       <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 pb-5 pt-3 lg:pt-1">
         <div className="min-w-0 max-w-[760px]">
@@ -105,28 +110,23 @@ export default function TopicRoute() {
           <h1 data-page-title="" className="mt-1.5 flex items-center gap-3 text-[24px] font-bold leading-[1.3] tracking-[-0.01em] text-ink lg:text-[26px]">
             {topic.brand && <BrandMark brand={topic.brand} size={34} />}
             <span>
-              {topic.name}{" "}
-              <span className="whitespace-nowrap font-semibold text-ink-4">最新动态</span>
+              {ui(topic.name)}{" "}
+              <span className="whitespace-nowrap font-semibold text-ink-4">{translate("最新动态")}</span>
             </span>
           </h1>
-          <p className="mt-1.5 text-pretty text-[13.5px] leading-relaxed text-ink-3">{topic.definition}</p>
+          <p className="mt-1.5 text-pretty text-[13.5px] leading-relaxed text-ink-3">{ui(topic.definition)}</p>
           <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-ink-4">
             <span>
               <span className="num font-semibold text-ink-2">{topic.total.toLocaleString("zh-CN")}</span>{` ${REPORTS.metricUnits.selectedCount}`}
             </span>
-            <span>
-              近 30 天 <span className="num font-semibold text-ink-2">{topic.recent.toLocaleString("zh-CN")}</span> 条
-            </span>
-            <span>
-              共收录 <span className="num font-semibold text-ink-2">{topic.poolTotal.toLocaleString("zh-CN")}</span> 条
-            </span>
+            <span>{translate("近 30 天")}<span className="num font-semibold text-ink-2">{topic.recent.toLocaleString("zh-CN")}</span>{translate("条")}</span>
+            <span>{translate("共收录")}<span className="num font-semibold text-ink-2">{topic.poolTotal.toLocaleString("zh-CN")}</span>{translate("条")}</span>
           </p>
         </div>
         <div className="flex items-center gap-4 text-[12px] text-ink-4">
           {topic.latest && (
             <span>
-              <time dateTime={topic.latest.at} className="num">{monthDayTime(topic.latest.at)}</time> 更新
-            </span>
+              <time dateTime={topic.latest.at} className="num">{monthDayTime(topic.latest.at)}</time>{translate("更新")}</span>
           )}
         </div>
       </header>
@@ -137,13 +137,13 @@ export default function TopicRoute() {
         </div>
       ))}
 
-      <h2 className="sr-only">{page === 1 ? `${topic.name}的精选` : `精选归档 · 第 ${page} 页`}</h2>
+      <h2 className="sr-only">{page === 1 ? translate("{0}的精选", [topic.name]) : translate("精选归档 · 第 {0} 页", [page])}</h2>
       {items.length === 0 ? (
         <div className="lg:card">
-          <EmptyState title="这个主题暂时还没有精选内容" />
+          <EmptyState title={translate("这个主题暂时还没有精选内容")} />
         </div>
       ) : (
-        <DayList items={items} headerAside={<span className="num whitespace-nowrap">第 {first}–{last} 条<span className="hidden sm:inline"> · 共 {topic.total.toLocaleString("zh-CN")} 条</span></span>} />
+        <DayList items={items} headerAside={<span className="num whitespace-nowrap">{translate("第")}{first}–{last}{translate("条")}<span className="hidden sm:inline">{translate("· 共")}{topic.total.toLocaleString("zh-CN")}{translate("条")}</span></span>} />
       )}
       <Pagination page={page} pageCount={pageCount} href={href} />
     </div>

@@ -65,8 +65,8 @@ test("public route subsets produce the same complete navigation data; filters st
   const answers = await Promise.all(["", "?_routes=root", "?_routes=routes%2Fhome", "?_routes=unknown"].map(async (query) => {
     const res = await fetch(`${origin}/featured.data${query}`);
     assert.equal(res.status, 200);
-    assert.match(res.headers.get("Cache-Control")!, /^public,/);
-    assert.equal(res.headers.get("X-Accel-Expires"), `@${deadline}`);
+    assert.equal(res.headers.get("Cache-Control"), "private, no-store");
+    assert.equal(res.headers.get("X-Accel-Expires"), "0");
     assert.doesNotMatch(res.headers.get("Cache-Control")!, /stale/);
     const body = await res.text();
     assert.ok(body.includes("root") && body.includes("routes/home"));
@@ -94,16 +94,16 @@ test("navigation streams are plain text for download managers, including errors"
   assert.equal(await download.text(), "# Article");
 });
 
-test("HTML and navigation share freshness; cookies do not personalize public results", async () => {
+test("HTML and navigation are private; unrelated cookies never reach public API reads", async () => {
   const html = await fetch(`${origin}/featured`);
   assert.equal(html.status, 200);
-  assert.equal(html.headers.get("X-Accel-Expires"), `@${deadline}`);
+  assert.equal(html.headers.get("X-Accel-Expires"), "0");
   assert.match(await html.text(), /精选/);
   // The api's deadline also fixes the result's own expiry, so reads seconds apart compare byte for byte.
   const plain = await fetch(`${origin}/featured.data`);
   const signedIn = await fetch(`${origin}/featured.data?_routes=root`, { headers: { cookie: "admin_session=private; reader=returning" } });
-  assert.match(plain.headers.get("Cache-Control")!, /^public,/);
-  assert.equal(plain.headers.get("X-Accel-Expires"), `@${deadline}`);
+  assert.equal(plain.headers.get("Cache-Control"), "private, no-store");
+  assert.equal(plain.headers.get("X-Accel-Expires"), "0");
   assert.equal(signedIn.headers.get("Set-Cookie"), null);
   assert.equal(await signedIn.text(), await plain.text());
   assert.ok(apiCookies.every((cookie) => !cookie));
@@ -138,19 +138,15 @@ test("admin data and actions never become public cache entries", async () => {
   await action.text();
 });
 
-test("browser freshness shares the selected deadline, including slow sibling loaders", async () => {
+test("language-dependent pages remain private even with positive upstream TTLs or slow loaders", async () => {
   const savedDeadline = deadline;
   try {
     deadline = Math.floor(Date.now() / 1000) + 20;
     for (const pathname of ["/featured", "/featured.data?_routes=routes%2Fhome"]) {
       const res = await fetch(origin + pathname);
       const cc = res.headers.get("Cache-Control")!;
-      const browser = Number(cc.match(/(?:^|,)\s*max-age=(\d+)/)![1]);
-      const shared = Number(cc.match(/(?:^|,)\s*s-maxage=(\d+)/)![1]);
-      assert.ok(browser > 0 && browser === shared);
-      assert.ok(Date.parse(res.headers.get("Date")!) / 1000 + browser <= deadline);
-      assert.equal(res.headers.get("X-Accel-Expires"), `@${deadline}`);
-      assert.match(cc, /must-revalidate/);
+      assert.equal(cc, "private, no-store");
+      assert.equal(res.headers.get("X-Accel-Expires"), "0");
       assert.doesNotMatch(cc, /stale/);
       await res.text();
     }
@@ -161,7 +157,7 @@ test("browser freshness shares the selected deadline, including slow sibling loa
     await Promise.all(["/featured", "/featured.data?_routes=routes%2Fhome"].map(async (pathname) => {
       const res = await fetch(origin + pathname);
       assert.equal(res.status, 200);
-      assert.equal(res.headers.get("Cache-Control"), "no-cache");
+      assert.equal(res.headers.get("Cache-Control"), "private, no-store");
       assert.equal(res.headers.get("X-Accel-Expires"), "0");
       await res.text();
     }));
@@ -171,12 +167,12 @@ test("browser freshness shares the selected deadline, including slow sibling loa
   }
 });
 
-test("a shared cache may keep an item page longer than browsers", async () => {
+test("item route data stays private despite a long upstream lifetime", async () => {
   const res = await fetch(`${origin}/items/long-lived.data`);
   assert.equal(res.status, 200);
   const cc = res.headers.get("Cache-Control")!;
-  assert.equal(Number(cc.match(/(?:^|,)\s*max-age=(\d+)/)![1]), 300);
-  assert.ok(Number(cc.match(/(?:^|,)\s*s-maxage=(\d+)/)![1]) > 300);
+  assert.equal(cc, "private, no-store");
+  assert.equal(res.headers.get("X-Accel-Expires"), "0");
   await res.text();
 });
 
@@ -195,7 +191,7 @@ test("browser caching preserves noindex and private sign-in responses", async ()
   const feedback = await fetch(origin + "/feedback");
   assert.equal(feedback.status, 200);
   assert.match(await feedback.text(), /name="robots" content="noindex/);
-  assert.equal(feedback.headers.get("Cache-Control"), "public, max-age=300, s-maxage=300, must-revalidate");
+  assert.equal(feedback.headers.get("Cache-Control"), "private, no-store");
   const login = await fetch(origin + "/admin/login");
   assert.equal(login.status, 200);
   assert.equal(login.headers.get("Cache-Control"), "private, no-store");
@@ -217,4 +213,13 @@ test("a web server assigned port zero serves its own canonical address", async (
     assert.equal(response.status, 200);
     assert.ok((await response.text()).includes(`rel="canonical" href="${ephemeral.origin}/about"`));
   } finally { await ephemeral.stop(); }
+});
+
+// API-owned responses retain freshness; localized HTML and route data are private.
+test("language cookies do not change public API cache policy", async () => {
+  const res = await fetch(origin + "/api/site/timeline", { headers: { cookie: "vulnhot-language=en" } });
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("Cache-Control"), "public, max-age=30, s-maxage=30");
+  assert.equal(res.headers.get("X-Accel-Expires"), "@" + deadline);
+  await res.text();
 });

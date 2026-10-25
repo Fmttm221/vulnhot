@@ -119,4 +119,7 @@ export async function startWebServer(api: Server, env: NodeJS.ProcessEnv = {}): 
 export async function visit(page: Page, url: string): Promise<void> {
   await page.goto(url);
   await page.waitForFunction(() => (globalThis as { __reactRouterDataRouter?: DataRouter }).__reactRouterDataRouter?.state.initialized);
+  // Route data can initialize before React commits ScrollRestoration. Let hydration
+  // paint before a test moves focus/scroll, otherwise that commit resets its position.
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
 }

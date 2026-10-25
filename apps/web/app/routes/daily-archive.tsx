@@ -1,7 +1,8 @@
+import { t as translate, ui, uiCopy } from "../lib/i18n";
 import { useLoaderData } from "react-router";
 import { IntentLink } from "../components/ui/IntentLink";
 import type { ReportIndexEntry, ReportIndexResponse } from "@aihot/contracts/site";
-import { SITE, withSubject } from "@aihot/site";
+import { SITE as SOURCE_SITE, withSubject } from "@aihot/site";
 import { apiGet, cachedPage } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { archiveLd, pageMeta } from "../lib/seo";
@@ -13,6 +14,7 @@ import { Rows, SectionPage } from "../features/report/ReportPaper";
 import { Nameplate } from "../features/report/Nameplate";
 import type { Screen } from "../components/shell/screens";
 
+
 export const handle: Screen = { tab: "daily", name: "往期" };
 export { pageHeaders as headers } from "../lib/api.server";
 export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
@@ -23,33 +25,33 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export function meta({ loaderData }: { loaderData?: { index: ReportIndexEntry[] } }) {
-  const entries = (loaderData?.index ?? []).map((e: ReportIndexEntry) => ({ path: `/daily/${e.key}`, name: e.title ? `${e.key} · ${e.title}` : `${SITE.name} 日报 · ${e.key}` }));
-  return pageMeta({ title: `${withSubject("日报")} · 历史存档`, description: `${SITE.name} 历史日报，按日期归档。`, path: "/daily/archive", image: "/og/pages/daily.png", jsonLd: archiveLd("/daily/archive", `${SITE.name} 日报 · 历史存档`, entries) });
+  const SITE = uiCopy(SOURCE_SITE);
+  const entries = (loaderData?.index ?? []).map((e: ReportIndexEntry) => ({ path: `/daily/${e.key}`, name: e.title ? `${e.key} · ${e.title}` : translate("{0} 日报 · {1}", [SITE.name, e.key]) }));
+  return pageMeta({ title: translate("{0} · 历史存档", [ui(withSubject("日报"))]), description: translate("{0} 历史日报，按日期归档。", [SITE.name]), path: "/daily/archive", image: "/og/pages/daily.png", jsonLd: archiveLd("/daily/archive", translate("{0} 日报 · 历史存档", [SITE.name]), entries) });
 }
 
 export default function DailyArchive() {
+  const SITE = uiCopy(SOURCE_SITE);
   const { index, today } = useLoaderData<typeof loader>();
   const months = archiveGroups("daily", index);
   return (
-    <ReportLayout kind="daily" index={index} current={null} today={today} back={{ to: "/daily", label: "日报" }} title="日报合订本">
+    <ReportLayout kind="daily" index={index} current={null} today={today} back={{ to: "/daily", label: translate("日报") }} title={translate("日报合订本")}>
       <div className="@container">
         <header className="pt-5 lg:pt-0">
           <div className="flex items-center justify-between gap-4 text-[12px] text-ink-4">
-            <span>{`${SITE.name} · ${withSubject("日报")}`}</span>
-            <span>
-              共 <span className="num">{index[0]?.issueNumber ?? 0}</span> 期
-            </span>
+            <span>{`${SITE.name} · ${ui(withSubject("日报"))}`}</span>
+            <span>{translate("共")}<span className="num">{index[0]?.issueNumber ?? 0}</span>{translate("期")}</span>
           </div>
           <div className="py-6 @[880px]:py-8">
             <h1 id="report-start" data-page-title="">
-              <span className="sr-only">日报合订本</span>
+              <span className="sr-only">{translate("日报合订本")}</span>
               <Nameplate which="archive" className="block h-[50px] w-auto @[520px]:h-[70px] @[880px]:h-[98px]" />
             </h1>
           </div>
           <div aria-hidden="true" className="border-t border-line-strong" />
         </header>
         {months.map((m) => (
-          <SectionPage key={m.id} id={`m-${m.id}`} label={m.label}>
+          <SectionPage key={m.id} id={`m-${m.id}`} label={ui(m.label)}>
             <Rows items={m.entries}>
               {(e, cell) => (
                 <IntentLink viewTransition key={e.key} to={`/daily/${e.key}`} className={`group flex gap-4 py-4 ${cell}`}>
@@ -58,7 +60,7 @@ export default function DailyArchive() {
                     <span className="mt-1.5 text-[10.5px] leading-none text-ink-4">{weekdayShort(e.key)}</span>
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-[15px] font-bold leading-[1.55] text-ink transition-colors group-hover:text-accent">{e.title ?? `${withSubject("日报")} ${e.key}`}</span>
+                    <span className="block text-[15px] font-bold leading-[1.55] text-ink transition-colors group-hover:text-accent">{e.title ?? `${ui(withSubject("日报"))} ${e.key}`}</span>
                     {!!e.count && (
                       <span className="mt-1 block text-[12px] text-ink-4">
                         <span className="num">{e.count}</span>{` ${ENTRIES_UNIT}`}

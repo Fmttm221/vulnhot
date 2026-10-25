@@ -105,6 +105,12 @@ docker compose up -d --build        # http://localhost:3000，后台在 /admin
 
 开发时把 `COLLECT_ENABLED`、`MODEL_CALLS_ENABLED` 关掉，只跑本地数据。不用 Docker 的本机跑法与验收命令见 [`VULNHOT.md`](VULNHOT.md) 第 5 节。
 
+### 界面语言
+
+桌面侧栏的 VulnHOT 标识下方可切换 `中文 / English`；手机端在“我的”页设置语言。首次访问跟随浏览器的首选语言：英语显示英文，其他语言显示中文；手动选择通过本站 Cookie 保存一年。
+
+语言切换覆盖访客界面、关于页和接入说明。情报、日报、更新日志、条款与隐私正文保留原文，管理员后台保持中文。界面文案维护在 `apps/web/app/lib/i18n/messages.ts`，不调用翻译服务。
+
 ## 部署
 
 `docker compose` 一把起（db / api / worker / web 四个容器），域名与 HTTPS、境外信源出口、升级与排错都在 [`docs/deploy.md`](docs/deploy.md)。
@@ -137,6 +143,6 @@ docker compose up -d --build        # http://localhost:3000，后台在 /admin
 
 ## 许可与致谢
 
-代码 MIT（见 [`LICENSE`](LICENSE)）。引擎来自 [AIHOT](https://github.com/KKKKhazix/AIHOT)（MIT）：本仓库是它的 fork，`apps/` 与 `packages/` 一行未改，改造全部落在 `site/`（站点身份）与 `industry/`（行业包），因此可以持续合并上游更新。
+代码 MIT（见 [`LICENSE`](LICENSE)）。引擎来自 [AIHOT](https://github.com/KKKKhazix/AIHOT)（MIT）：本仓库是它的 fork，后端引擎沿用上游，站点身份与行业配置分别保留在 `site/` 与 `industry/`，访客界面的中英切换位于 `apps/web/`；合并上游更新时需核对这部分前端改动。
 
 AIHOT 的名称与 Logo 不在其 MIT 授权范围内，本仓库使用自己的名称与图标（见 [`NOTICE`](NOTICE)）。站内展示的标题与摘要由模型根据公开来源生成，原文版权归各来源所有；本站不托管、不分发漏洞利用代码，默认只展示摘要与原文链接。

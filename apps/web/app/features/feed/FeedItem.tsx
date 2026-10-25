@@ -1,3 +1,4 @@
+import { t as translate, uiCopy, ui } from "../../lib/i18n";
 // One report in a feed. Desktop (≥ 961px): a white card beside the time rail. Phones: a compact row with
 // the time in the source line, the bookmark at hand, the reason in one line and duplicate reports
 // behind one button that opens a sheet. One markup, two presentations.
@@ -6,7 +7,7 @@ import { Link } from "react-router";
 import { IntentLink } from "../../components/ui/IntentLink";
 import type { GroupInfo, FeedItemSummary, TimelineFilters } from "@aihot/contracts/site";
 import { CATEGORY_LABELS } from "@aihot/contracts/taxonomy";
-import { ITEM_COPY } from "@aihot/site";
+import { ITEM_COPY as SOURCE_ITEM_COPY } from "@aihot/site";
 import { SameEventBadge, SelectedBadge } from "../../components/ui/Badge";
 import { ScoreLabel } from "../../components/ui/Score";
 import { beijingTime } from "@aihot/contracts/time";
@@ -14,6 +15,7 @@ import { MediaThumbs, SourceLine, StarButton, readTone } from "./parts";
 import { GroupButton, GroupSources } from "./ReadingGroup";
 import { QuotedLine } from "../item/QuotedPost";
 import { rememberPreview } from "../item/preview";
+
 
 export interface FeedItemProps {
   item: FeedItemSummary;
@@ -28,6 +30,7 @@ export interface FeedItemProps {
 }
 
 export const FeedItem = memo(function FeedItem({ item, group, filters, read = false, onOpen, showTags = false, at }: FeedItemProps) {
+  const ITEM_COPY = uiCopy(SOURCE_ITEM_COPY);
   const isX = item.channel === "x" && !!item.x;
   const open = () => {
     rememberPreview(item);
@@ -68,7 +71,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
           <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} className="after:absolute after:inset-0 after:content-['']">
             {item.summary}
           </IntentLink>
-        </p> : <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} aria-label={`查看 ${item.x!.authorName} 的帖子`} className="absolute inset-0" />
+        </p> : <IntentLink viewTransition to={`/items/${item.id}`} onClick={open} aria-label={translate("查看 {0} 的帖子", [item.x!.authorName])} className="absolute inset-0" />
       ) : (
         <>
           <h3 className={`mt-1.5 line-clamp-2 text-[17px] font-[650] leading-[1.5] lg:mt-2 lg:line-clamp-none lg:leading-[1.55] ${readTone(read, "text-ink")}`}>
@@ -87,7 +90,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
         <div className="relative z-10 mt-2 hidden flex-wrap gap-x-2.5 gap-y-1 text-[12px] text-ink-4 lg:flex">
           {showTags && item.category && (
             <Link to={`/all?category=${item.category}`} className="hover:text-accent">
-              {CATEGORY_LABELS[item.category]}
+              {ui(CATEGORY_LABELS[item.category])}
             </Link>
           )}
           {tags.map((t) => (
@@ -99,9 +102,7 @@ export const FeedItem = memo(function FeedItem({ item, group, filters, read = fa
       )}
 
       {item.sameEvent && (
-        <p className="relative z-10 mt-2 line-clamp-1 text-[12.5px] text-ink-4">
-          同一件事，精选收录的是
-          <Link viewTransition to={`/items/${item.sameEvent.id}`} className="text-ink-3 transition-colors hover:text-accent">
+        <p className="relative z-10 mt-2 line-clamp-1 text-[12.5px] text-ink-4">{translate("同一件事，精选收录的是")}<Link viewTransition to={`/items/${item.sameEvent.id}`} className="text-ink-3 transition-colors hover:text-accent">
             《{item.sameEvent.title}》
           </Link>
         </p>

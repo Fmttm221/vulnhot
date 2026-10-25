@@ -1,3 +1,4 @@
+import { ui } from "../../lib/i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Presence } from "./Presence";
 
@@ -22,8 +23,8 @@ export function Menu({ trigger, label, children }: { trigger: ReactNode; label: 
     <div ref={ref} className="relative">
       <button
         type="button"
-        aria-label={label}
-        title={label}
+        aria-label={ui(label)}
+        title={ui(label)}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(!open)}

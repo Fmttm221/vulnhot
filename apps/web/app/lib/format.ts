@@ -1,4 +1,16 @@
 import { beijingDate, beijingTime, beijingWeekday, monthDay } from "@aihot/contracts/time";
+import { currentLocale } from './locale.ts';
+import { t as translate } from './i18n.ts';
+
+export function displayMonthDay(date: string, today?: string): string {
+  if (currentLocale() !== 'en') return monthDay(date, today);
+  // This is an already-resolved Beijing calendar day, not an instant to convert.
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', ...(today && date.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' as const } : {}), timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`));
+}
+
+export function displayWeekday(date: string): string {
+  return currentLocale() === 'en' ? new Intl.DateTimeFormat('en', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`)) : beijingWeekday(date);
+}
 
 /** A list cut into runs of the same Beijing day, in the list's own order. */
 export function byBeijingDay<T>(list: readonly T[], at: (entry: T) => string): Array<{ day: string; entries: T[] }> {
@@ -14,19 +26,20 @@ export function byBeijingDay<T>(list: readonly T[], at: (entry: T) => string): A
 
 /** "周六" of a calendar date (YYYY-MM-DD). */
 export function weekdayShort(date: string): string {
+  if (currentLocale() === 'en') return displayWeekday(date).slice(0, 3);
   return beijingWeekday(date).replace("星期", "周");
 }
 
 export function relativeTime(iso: string, now = Date.now()): string {
   const t = Date.parse(iso);
   const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 60) return "刚刚";
+  if (s < 60) return translate("刚刚");
   const m = Math.round(s / 60);
-  if (m < 60) return `${m} 分钟前`;
+  if (m < 60) return currentLocale() === 'en' ? new Intl.RelativeTimeFormat('en').format(-m, 'minute') : `${m} 分钟前`;
   const h = Math.round(m / 60);
-  if (h < 24) return `${h} 小时前`;
+  if (h < 24) return currentLocale() === 'en' ? new Intl.RelativeTimeFormat('en').format(-h, 'hour') : `${h} 小时前`;
   const d = Math.round(h / 24);
-  if (d < 30) return `${d} 天前`;
+  if (d < 30) return currentLocale() === 'en' ? new Intl.RelativeTimeFormat('en').format(-d, 'day') : `${d} 天前`;
   return beijingDate(iso);
 }
 
@@ -36,6 +49,8 @@ export function fullDateTime(iso: string): string {
 
 /** "9月24日 10:51" (Beijing), for lists that span days. */
 export function monthDayTime(iso: string): string {
+  // Numeric English dates keep chart labels and their time split unambiguous.
+  if (currentLocale() === 'en') return `${beijingDate(iso).slice(5).replace('-', '/')} ${beijingTime(iso)}`;
   return `${monthDay(beijingDate(iso))} ${beijingTime(iso)}`;
 }
 

@@ -1,9 +1,12 @@
-import { SITE } from "@aihot/site";
+import { uiCopy } from "../../lib/i18n";
+import { SITE as SOURCE_SITE } from "@aihot/site";
 import badge from "./police-badge.png";
+
 
 /** The filing numbers mainland-China sites must show at the bottom of the page, each linked to its registry:
  *  the public-security number first, then the ICP number. */
 export function Filings({ className, badgeSize }: { className: string; badgeSize: number }) {
+  const SITE = uiCopy(SOURCE_SITE);
   return (
     <>
       {SITE.psb && (

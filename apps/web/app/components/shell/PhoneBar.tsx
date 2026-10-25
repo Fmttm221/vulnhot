@@ -1,3 +1,4 @@
+import { t as translate, ui } from "../../lib/i18n";
 // The phone shell's top bar (below lg). Left: where back leads, or the brand; middle: the page's title
 // once its own heading has scrolled up under the bar, or a switch that always shows; right: actions. Tab
 // pages also get a large title under the bar. Desktop pages keep their own headers.
@@ -76,7 +77,7 @@ function BackButton({ to, label }: BackTarget) {
   useIsoLayoutEffect(() => {
     if (historyIndex() === 0) return setText(label);
     const behind = previousScreen();
-    setText(behind ? behind : "返回");
+    setText(behind ? behind : translate("返回"));
   }, [key, label]);
   return (
     <button
@@ -89,7 +90,7 @@ function BackButton({ to, label }: BackTarget) {
       className="flex h-11 min-w-11 items-center pl-1 pr-2 text-[16px] text-accent transition-opacity active:opacity-50"
     >
       <IconChevronLeft size={25} strokeWidth={2.1} />
-      <span className="max-w-[7em] truncate">{text}</span>
+      <span className="max-w-[7em] truncate">{ui(text)}</span>
     </button>
   );
 }
@@ -103,8 +104,8 @@ export const BarButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTML
     <button
       ref={ref}
       type="button"
-      aria-label={label}
-      title={label}
+      aria-label={ui(label)}
+      title={ui(label)}
       className={`relative grid size-11 shrink-0 place-items-center rounded-full transition-colors active:bg-bg-sunk ${on ? "text-accent" : "text-ink-2"} ${className}`}
       {...rest}
     >

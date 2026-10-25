@@ -1,5 +1,6 @@
+import { t as translate, uiCopy, ui } from "../lib/i18n";
 import { useLoaderData } from "react-router";
-import { SITE, subjectAfter, withSubject } from "@aihot/site";
+import { SITE as SOURCE_SITE, subjectAfter, withSubject } from "@aihot/site";
 import type { Route } from "./+types/topics";
 import type { TopicSummary, TopicsResponse } from "@aihot/contracts/site";
 import { apiGet, cachedPage } from "../lib/api.server";
@@ -13,6 +14,7 @@ import { PhoneBar } from "../components/shell/PhoneBar";
 import { navUp } from "../components/shell/nav";
 import type { Screen } from "../components/shell/screens";
 
+
 export const handle: Screen = { home: navUp("/topics").tab, name: "主题" };
 export { pageHeaders as headers } from "../lib/api.server";
 export const { clientLoader, shouldRevalidate } = pageReuse<typeof loader>();
@@ -22,15 +24,16 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
+  const SITE = uiCopy(SOURCE_SITE);
   if (!loaderData) return pageMeta({ title: SITE.topicsTitle, path: "/topics", image: "/og/pages/topics.png" });
   const { groups, topics } = loaderData;
-  const by = groups.map((g) => g.name).join("、");
+  const by = groups.map((g) => ui(g.name)).join("、");
   const indexed = topics.filter((t) => t.indexable);
   const named = indexed.slice(0, 6).map((t) => t.name.split(" / ")[0]).join("、");
   const base = siteUrl();
   return pageMeta({
     title: SITE.topicsTitle,
-    description: `按${by}${subjectAfter("追踪", "最新动态")}：${named ? `${named}等 ` : ""}${topics.length} 个主题，浏览最新精选与重要进展，持续更新。`,
+    description: translate("按{0}{1}：{2}{3} 个主题，浏览最新精选与重要进展，持续更新。", [by, ui(subjectAfter("追踪", "最新动态")), named ? `${named}等 ` : "", topics.length]),
     path: "/topics",
     image: "/og/pages/topics.png",
     jsonLd: [
@@ -39,7 +42,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
         "@type": "CollectionPage",
         "@id": `${base}/topics#collection`,
         url: `${base}/topics`,
-        name: withSubject("主题"),
+        name: ui(withSubject("主题")),
         inLanguage: SITE.locale,
         isPartOf: { "@id": `${base}/#website` },
         mainEntity: {
@@ -48,7 +51,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
           itemListElement: indexed.map((t, i) => ({ "@type": "ListItem", position: i + 1, name: t.name, url: `${base}/topics/${t.slug}` })),
         },
       },
-      breadcrumbLd([{ name: SITE.name, path: "/" }, { name: "主题", path: "/topics" }]),
+      breadcrumbLd([{ name: SITE.name, path: "/" }, { name: translate("主题"), path: "/topics" }]),
     ],
   });
 }
@@ -73,20 +76,18 @@ function TopicCard({ t }: { t: TopicSummary }) {
               <BrandMark brand={t.brand} size={22} />
             </span>
           )}
-          {t.name}
+          {ui(t.name)}
         </span>
         <span className="mt-0.5 line-clamp-1 text-[12.5px] leading-[1.6] text-ink-4 lg:mt-1.5 lg:line-clamp-2 lg:flex-1 lg:text-[13px] lg:leading-[1.65] lg:text-ink-2">
-          {t.latest?.title ?? t.definition}
+          {t.latest?.title ?? ui(t.definition)}
         </span>
         <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11.5px] text-ink-4 lg:mt-3 lg:justify-between">
           {t.latest && <time dateTime={t.latest.at} suppressHydrationWarning>{relativeTime(t.latest.at)}</time>}
           <span>
             {t.recent > 0 ? (
-              <>
-                近 30 天 <span className="num font-semibold text-ink-3">{t.recent}</span> 条
-              </>
+              <>{translate("近 30 天")}<span className="num font-semibold text-ink-3">{t.recent}</span>{translate("条")}</>
             ) : (
-              "近 30 天暂无新精选"
+              translate("近 30 天暂无新精选")
             )}
           </span>
         </span>
@@ -100,21 +101,20 @@ export default function TopicsPage() {
   const { groups, topics } = useLoaderData<typeof loader>();
   return (
     <div className="pb-10">
-      <PhoneBar back={{ to: "/more", label: "我的" }} title="主题" />
+      <PhoneBar back={{ to: "/more", label: translate("我的") }} title={translate("主题")} />
       <header className="pb-2 pt-3 lg:pt-1">
-        <h1 data-page-title="" className="text-[24px] font-semibold leading-[1.3] text-ink">{subjectAfter("按主题看")}</h1>
+        <h1 data-page-title="" className="text-[24px] font-semibold leading-[1.3] text-ink">{ui(subjectAfter("按主题看"))}</h1>
         <p className="mt-1.5 text-[13px] leading-relaxed text-ink-3">
-          {`按${groups.map((g) => g.name).join("、")}浏览 `}
-          <span className="num">{topics.length}</span> 个主题，追踪最新精选与重要进展。
-        </p>
+          {translate("按{0}浏览 ", [groups.map((g) => ui(g.name)).join("、")])}
+          <span className="num">{topics.length}</span>{translate("个主题，追踪最新精选与重要进展。")}</p>
       </header>
       {groups.map((g) => (
         <section key={g.key} aria-labelledby={`topics-${g.key}`} className="pt-8">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <h2 id={`topics-${g.key}`} className="text-[15px] font-bold text-ink">
-              {g.name}
+              {ui(g.name)}
             </h2>
-            <p className="text-[12px] text-ink-4">{g.blurb}</p>
+            <p className="text-[12px] text-ink-4">{ui(g.blurb)}</p>
           </div>
           <ul className="mt-3 divide-y divide-line-soft overflow-hidden rounded-card border border-line bg-surface lg:mt-3.5 lg:grid lg:grid-cols-3 lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent xl:grid-cols-4">
             {topics

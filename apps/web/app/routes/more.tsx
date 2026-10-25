@@ -13,7 +13,7 @@ import { setFontPreference, useFontPreference, useStarred } from "../lib/local-s
 import { Select } from "../components/ui/Controls";
 import { ThemeSwitch } from "../components/shell/ThemeSwitch";
 import { Filings } from "../components/shell/Filings";
-import { IconBookmark, IconChevronRight, IconGrid, IconHeart, IconMessage, IconMoon, IconPlug, IconSparkles } from "../components/icons";
+import { IconBookmark, IconChevronRight, IconGithub, IconGrid, IconHeart, IconMessage, IconMoon, IconPlug, IconSparkles } from "../components/icons";
 
 export const handle: Screen = { tab: "me", name: "我的" };
 
@@ -103,6 +103,21 @@ export default function MorePage() {
           ))}
         </Group>
         <Group title="关于">
+          {SITE.github && (
+            <li>
+              <a
+                href={SITE.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[52px] items-center gap-3 px-4 text-[16px] font-medium text-ink transition-colors active:bg-bg-sunk lg:hover:bg-bg-sunk"
+              >
+                <span className="text-ink-3"><IconGithub size={20} /></span>
+                <span className="flex flex-1 items-center gap-2">GitHub 开源仓库</span>
+                <span className="text-[14px] font-normal text-ink-4">点个 Star 支持</span>
+                <IconChevronRight size={16} className="text-ink-4" />
+              </a>
+            </li>
+          )}
           <RowLink row={{ to: "/about", label: `关于 ${SITE.name}`, icon: <IconHeart size={20} /> }} />
           <RowLink row={{ to: "/changelog", label: "更新日志", icon: <IconSparkles size={20} /> }} dot={changelogDot} />
           <RowLink row={{ to: "/feedback", label: "意见反馈", icon: <IconMessage size={20} /> }} />

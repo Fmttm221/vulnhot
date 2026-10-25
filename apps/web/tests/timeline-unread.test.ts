@@ -60,7 +60,7 @@ const api = fakeApi((url, res) => {
 before(async () => {
   const started = await Promise.allSettled([
     startWebServer(api).then((w) => { web = w; origin = w.origin; }),
-    chromium.launch({ channel: "chromium" }).then((b) => { chrome = b; }),
+    chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" }).then((b) => { chrome = b; }),
   ]);
   for (const result of started) if (result.status === "rejected") throw result.reason;
 });
@@ -72,7 +72,7 @@ after(async () => {
 
 /** A reader who has already opened these reports, in this browser only. */
 async function readerWith(read: string[]) {
-  const context = await chrome.newContext();
+  const context = await chrome.newContext({ locale: "zh-CN" });
   await context.addInitScript((ids) => {
     try { window.localStorage.setItem("aihot-read-items", JSON.stringify(ids)); } catch { /* storage unavailable */ }
   }, read);

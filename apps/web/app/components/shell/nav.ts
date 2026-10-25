@@ -1,3 +1,4 @@
+import { ui } from "../../lib/i18n";
 // Site navigation in one place: the desktop sidebar's sections and the phone tab bar's tabs, the engine's
 // and the site's modules'.
 import type { ReactNode } from "react";

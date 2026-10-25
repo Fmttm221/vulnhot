@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 import { useState } from "react";
 import type { MediaView } from "@aihot/contracts/site";
 import { Lightbox } from "../../components/ui/Lightbox";
@@ -44,12 +45,12 @@ export function MediaGallery({ media, postUrl }: { media: MediaView[]; postUrl: 
             />
           );
           return m.kind === "video" ? (
-            <a key={m.url} href={postUrl} target="_blank" rel="noopener noreferrer" aria-label="打开原推播放视频" className={tile}>
+            <a key={m.url} href={postUrl} target="_blank" rel="noopener noreferrer" aria-label={translate("打开原推播放视频")} className={tile}>
               {img}
               <PlayMark />
             </a>
           ) : (
-            <button key={m.url} type="button" onClick={() => setOpen(images.indexOf(m))} aria-label={m.alt ? `查看大图：${m.alt}` : "查看大图"} className={`${tile} cursor-zoom-in`}>
+            <button key={m.url} type="button" onClick={() => setOpen(images.indexOf(m))} aria-label={m.alt ? translate("查看大图：{0}", [m.alt]) : translate("查看大图")} className={`${tile} cursor-zoom-in`}>
               {img}
             </button>
           );

@@ -1,3 +1,4 @@
+import { t as translate, ui } from "@aihot/web/lib/i18n";
 // /appearance：配色选择。六档：跟随系统、浅色、深夜（框架自带的三档）、黑客（幽灵绿）、黑客（血焰红）、白客（白帽蓝）。
 // 点一下立即生效并记住；框架的「我的 → 深浅色」开关仍然可用，两边写的是同一组偏好。
 import { useEffect, useState } from "react";
@@ -11,7 +12,7 @@ import { applyExtraTheme, readExtraTheme } from "./client.ts";
 export const handle: Screen = { tab: "me", name: "配色" };
 
 export function meta() {
-  return pageMeta({ title: "配色", description: "VulnHOT 的配色：跟随系统、浅色、深夜，以及黑客（幽灵绿 / 血焰红）与白客（白帽蓝）三套额外配色。", path: "/appearance" });
+  return pageMeta({ title: translate("配色"), description: translate("VulnHOT 的配色：跟随系统、浅色、深夜，以及黑客（幽灵绿 / 血焰红）与白客（白帽蓝）三套额外配色。"), path: "/appearance" });
 }
 
 type Choice = "system" | "light" | "dark" | ExtraTheme;
@@ -59,13 +60,9 @@ export default function Appearance() {
 
   return (
     <div className="mx-auto w-full max-w-[860px] px-4 pb-16 pt-4 lg:px-0">
-      <Kicker>外观</Kicker>
-      <h1 className="mt-3 text-[30px] font-black leading-[1.15] tracking-[-0.02em] text-ink lg:text-[34px]">换一套配色</h1>
-      <p className="mt-2 max-w-[640px] text-[15px] leading-[1.75] text-ink-3">
-        前三档是框架自带的基础色，后三档是本站加的：<span className="text-accent">幽灵绿</span>把整站压成终端绿，并在内容后面挂一层缓慢下落的代码流；
-        <span className="text-accent">血焰红</span>是深蓝黑底配血焰橙红、角落带暖光晕，看仪表盘最舒服；
-        <span className="text-accent">白帽蓝</span>换成接近白纸的冷白底配皇家蓝，像一份审计报告。选择只存在当前浏览器，不影响别人看到的样子。
-      </p>
+      <Kicker>{translate("外观")}</Kicker>
+      <h1 className="mt-3 text-[30px] font-black leading-[1.15] tracking-[-0.02em] text-ink lg:text-[34px]">{translate("换一套配色")}</h1>
+      <p className="mt-2 max-w-[640px] text-[15px] leading-[1.75] text-ink-3">{translate("前三档是框架自带的基础色，后三档是本站加的：")}<span className="text-accent">{translate("幽灵绿")}</span>{translate("把整站压成终端绿，并在内容后面挂一层缓慢下落的代码流；")}<span className="text-accent">{translate("血焰红")}</span>{translate("是深蓝黑底配血焰橙红、角落带暖光晕，看仪表盘最舒服；")}<span className="text-accent">{translate("白帽蓝")}</span>{translate("换成接近白纸的冷白底配皇家蓝，像一份审计报告。选择只存在当前浏览器，不影响别人看到的样子。")}</p>
 
       <div className="mt-7 grid gap-3 sm:grid-cols-2">
         {cards.map((card) => {
@@ -84,22 +81,20 @@ export default function Appearance() {
               }`}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[16px] font-bold text-ink">{card.name}</span>
-                {active ? <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-contrast">使用中</span> : null}
+                <span className="text-[16px] font-bold text-ink">{ui(card.name)}</span>
+                {active ? <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-accent-contrast">{translate("使用中")}</span> : null}
               </div>
               <Swatches colors={card.swatch} />
-              <p className="text-[13px] leading-[1.7] text-ink-3">{card.pitch}</p>
+              <p className="text-[13px] leading-[1.7] text-ink-3">{ui(card.pitch)}</p>
             </button>
           );
         })}
       </div>
 
       <div className="mt-8 rounded-card border border-line-soft bg-surface-2 p-4 text-[13px] leading-[1.8] text-ink-3">
-        <p className="font-semibold text-ink-2">两点说明</p>
-        <p className="mt-1">
-          黑客配色会强制使用深色底（框架的「深夜」），白客配色强制使用浅色底；在「我的」页用框架自带的深浅色开关切换时，会回到对应的基础色。
-        </p>
-        <p className="mt-1">数据流动画遵循系统的「减少动态效果」设置，标签页切到后台会停；不想看动画可以直接选白客。</p>
+        <p className="font-semibold text-ink-2">{translate("两点说明")}</p>
+        <p className="mt-1">{translate("黑客配色会强制使用深色底（框架的「深夜」），白客配色强制使用浅色底；在「我的」页用框架自带的深浅色开关切换时，会回到对应的基础色。")}</p>
+        <p className="mt-1">{translate("数据流动画遵循系统的「减少动态效果」设置，标签页切到后台会停；不想看动画可以直接选白客。")}</p>
       </div>
     </div>
   );

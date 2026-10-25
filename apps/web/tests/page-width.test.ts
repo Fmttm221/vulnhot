@@ -40,7 +40,7 @@ let chrome: Browser;
 let safari: Browser;
 before(async () => {
   web = await startWebServer(api);
-  chrome = await chromium.launch({ channel: "chromium" });
+  chrome = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" });
   safari = await webkit.launch();
 });
 after(async () => { await chrome?.close(); await safari?.close(); await web?.stop(); });
@@ -88,7 +88,7 @@ function pastEdge(width: number): string[] {
 
 for (const engine of ["Chromium", "WebKit"] as const) test(`${engine}: pages stay within the screen at 320, 393 and 1024 pixels`, async () => {
   for (const width of [393, 320, 1024]) {
-    const context = await (engine === "Chromium" ? chrome : safari).newContext({ viewport: { width, height: 873 }, isMobile: width < 961, reducedMotion: "reduce" });
+    const context = await (engine === "Chromium" ? chrome : safari).newContext({ locale: "zh-CN",  viewport: { width, height: 873 }, isMobile: width < 961, reducedMotion: "reduce" });
     try {
       const page = await context.newPage();
       for (const { path, ready } of PAGES) {

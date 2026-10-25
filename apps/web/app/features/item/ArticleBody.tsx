@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 // An article body as the server sent it (sanitised HTML, in the first HTML response), enhanced after
 // hydration: code blocks get a head with the language and a copy button and are coloured on demand,
 // and pictures that are not links open in the viewer, stepping through the body's pictures.
@@ -52,11 +53,11 @@ function enhanceCode(root: HTMLElement): () => void {
     const head = document.createElement("div");
     head.className = "code-block-head";
     const label = document.createElement("span");
-    label.textContent = "代码";
+    label.textContent = translate("代码");
     const button = document.createElement("button");
     button.type = "button";
     button.className = "code-block-copy";
-    button.textContent = "复制";
+    button.textContent = translate("复制");
     button.setAttribute("aria-label", "复制代码");
     button.addEventListener("click", async () => {
       let ok = true;
@@ -66,11 +67,11 @@ function enhanceCode(root: HTMLElement): () => void {
         ok = false;
       }
       button.dataset.status = ok ? "copied" : "error";
-      button.textContent = ok ? "已复制" : "请手动复制";
+      button.textContent = ok ? translate("已复制") : translate("请手动复制");
       const timer = setTimeout(() => {
         timers.delete(timer);
         button.dataset.status = "";
-        button.textContent = "复制";
+        button.textContent = translate("复制");
       }, ok ? 1800 : 2400);
       timers.add(timer);
     });
@@ -113,7 +114,7 @@ export function ArticleBody({ html }: { html: string }) {
         img.classList.add("zoomable");
         img.tabIndex = 0;
         img.setAttribute("role", "button");
-        img.setAttribute("aria-label", img.alt ? `查看大图：${img.alt}` : "查看大图");
+        img.setAttribute("aria-label", img.alt ? translate("查看大图：{0}", [img.alt]) : translate("查看大图"));
       } else if (img.classList.contains("zoomable")) {
         img.classList.remove("zoomable");
         img.removeAttribute("tabindex");

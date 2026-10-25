@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { Presence } from "./Presence";
@@ -104,7 +105,7 @@ export function Lightbox({ images, index, onIndex, onClose }: { images: Lightbox
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        aria-label={many && index !== null ? `图片 ${index + 1} / ${images.length}` : "图片"}
+        aria-label={many && index !== null ? translate("图片 {0} / {1}", [index + 1, images.length]) : translate("图片")}
         onClick={() => {
           if (!tappedAfterDrag()) onClose();
         }}
@@ -117,15 +118,15 @@ export function Lightbox({ images, index, onIndex, onClose }: { images: Lightbox
         {current && (
           <img ref={img} key={current.src} src={current.src} decoding="async" alt={current.alt ?? ""} className="lightbox-img anim-zoom-in min-h-0 min-w-0 max-h-[calc(100dvh-5rem)] max-w-full rounded-control object-contain shadow-2xl" />
         )}
-        <button ref={closeButton} type="button" aria-label="关闭" onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute right-[max(16px,env(safe-area-inset-right))] top-[max(16px,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20">
+        <button ref={closeButton} type="button" aria-label={translate("关闭")} onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute right-[max(16px,env(safe-area-inset-right))] top-[max(16px,env(safe-area-inset-top))] grid size-11 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20">
           <IconClose size={18} />
         </button>
         {many && index !== null && (
           <>
-            <button type="button" aria-label="上一张" onClick={(e) => { e.stopPropagation(); onIndex((index - 1 + images.length) % images.length); }} className={`${nav} left-[max(12px,env(safe-area-inset-left))] sm:left-5`}>
+            <button type="button" aria-label={translate("上一张")} onClick={(e) => { e.stopPropagation(); onIndex((index - 1 + images.length) % images.length); }} className={`${nav} left-[max(12px,env(safe-area-inset-left))] sm:left-5`}>
               <IconArrowLeft size={18} />
             </button>
-            <button type="button" aria-label="下一张" onClick={(e) => { e.stopPropagation(); onIndex((index + 1) % images.length); }} className={`${nav} right-[max(12px,env(safe-area-inset-right))] sm:right-5`}>
+            <button type="button" aria-label={translate("下一张")} onClick={(e) => { e.stopPropagation(); onIndex((index + 1) % images.length); }} className={`${nav} right-[max(12px,env(safe-area-inset-right))] sm:right-5`}>
               <IconArrowRight size={18} />
             </button>
             <span className="num pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-2.5 py-0.5 text-[12px] text-white/85">

@@ -1,3 +1,4 @@
+import { t as translate, ui } from "../../lib/i18n";
 // The about page's river. Every line is one of the site's real sources (hover names it). Lines run in
 // from the left, gather into bundles (many reports of one story), meet the 精选 gate that lets a few
 // bundles through, and the ones that pass turn teal and run into a small newspaper: the day's report.
@@ -484,7 +485,7 @@ export function SignalRiver({
       const p = L.paper;
       if (x >= p.x - 8 && x <= p.x + p.w + 8 && y >= p.y - 8 && y <= p.y + p.h + 8) {
         hover = { s: null, bundle: null, paper: true };
-        place(x, y, withSubject("日报"), EDITION.daily);
+        place(x, y, ui(withSubject("日报")), EDITION.daily);
         redraw();
         return;
       }
@@ -507,13 +508,13 @@ export function SignalRiver({
       const b = L.bundles[s.bundle]!;
       if (x < L.x2) {
         hover = { s: best, bundle: null, paper: false };
-        const kind = s.source ? (KIND[s.source.kind] ?? "信源") : "信源";
-        place(x, y, s.source ? s.source.name : "一个信源", s.source?.heatOnly ? `${kind} · 只计入热度` : kind);
+        const kind = s.source ? (KIND[s.source.kind] ?? translate("信源")) : translate("信源");
+        place(x, y, s.source ? s.source.name : translate("一个信源"), s.source?.heatOnly ? translate("{0} · 只计入热度", [kind]) : kind);
       } else {
         hover = { s: null, bundle: s.bundle, paper: false };
-        if (x < L.gate) place(x, y, "同一件事", `${b.n} 个来源的报道合成一条`);
-        else if (b.kept) place(x, y, "进了精选", "有信息量，分数也够");
-        else place(x, y, "没进精选", "信息不够、重复或只是营销");
+        if (x < L.gate) place(x, y, translate("同一件事"), translate("{0} 个来源的报道合成一条", [b.n]));
+        else if (b.kept) place(x, y, translate("进了精选"), translate("有信息量，分数也够"));
+        else place(x, y, translate("没进精选"), translate("信息不够、重复或只是营销"));
       }
       redraw();
     };

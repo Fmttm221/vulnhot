@@ -1,15 +1,17 @@
+import { t as translate, ui, uiCopy } from "../../lib/i18n";
 // Feed filters: the channel and category choice (a row of tabs on desktop, a sheet behind the bar's filter
 // button on phones), the phone bar of 精选 and 全部, and search.
 import { useEffect, useRef, useState } from "react";
 import { Form, Link, useNavigation, useSearchParams } from "react-router";
 import { CATEGORY_KEYS, CATEGORY_LABELS, CHANNEL_LABELS, type CategoryKey, type ChannelKey } from "@aihot/contracts/taxonomy";
-import { SITE } from "@aihot/site";
+import { SITE as SOURCE_SITE } from "@aihot/site";
 import { IconClose, IconFilter, IconSearch } from "../../components/icons";
 import { PillTabs } from "../../components/ui/Tabs";
 import { ChoiceTick, Sheet, sheetChoice } from "../../components/ui/Sheet";
 import { Wordmark } from "@aihot/site/brand/Logo.tsx";
 import { BarButton, PhoneBar } from "../../components/shell/PhoneBar";
 import { openSearch } from "../search/SearchOverlay";
+
 
 /** Same page with some query parameters changed (paging state dropped). */
 function hrefWith(base: string, params: URLSearchParams, patch: Record<string, string | null>) {
@@ -44,7 +46,7 @@ function filterKey(category: CategoryKey | null, channel: ChannelKey): string {
 /** Desktop: the filter as a row of tabs beside the search field. */
 export function CategoryTabs({ base, category, channel = "all", layoutId, className = "" }: { base: string; category: CategoryKey | null; channel?: ChannelKey; layoutId: string; className?: string }) {
   const [params] = useSearchParams();
-  return <PillTabs items={filterOptions(base, params, "全部").map(o => ({ ...o, prefetchOnPress: true }))} active={filterKey(category, channel)} layoutId={layoutId} label="筛选" className={className} />;
+  return <PillTabs items={filterOptions(base, params, translate("全部")).map(o => ({ ...o, prefetchOnPress: true }))} active={filterKey(category, channel)} layoutId={layoutId} label={translate("筛选")} className={className} />;
 }
 
 /**
@@ -52,6 +54,7 @@ export function CategoryTabs({ base, category, channel = "all", layoutId, classN
  * buttons for the filter sheet and search.
  */
 export function FeedBar({ base, category, channel }: { base: "/featured" | "/all"; category: CategoryKey | null; channel: ChannelKey }) {
+  const SITE = uiCopy(SOURCE_SITE);
   const [params] = useSearchParams();
   const [sheet, setSheet] = useState(false);
   const scope = (to: string) => hrefWith(to, params, { q: null, tab: null, search: null });
@@ -60,7 +63,7 @@ export function FeedBar({ base, category, channel }: { base: "/featured" | "/all
     <>
       <PhoneBar
         leading={
-          <Link to="/" aria-label={`${SITE.name} 首页`} className="flex h-11 items-center pl-2.5 pr-2 text-ink">
+          <Link to="/" aria-label={translate("{0} 首页", [SITE.name])} className="flex h-11 items-center pl-2.5 pr-2 text-ink">
             <Wordmark size={17} />
           </Link>
         }
@@ -68,17 +71,17 @@ export function FeedBar({ base, category, channel }: { base: "/featured" | "/all
           <PillTabs
             size="sm"
             layoutId="feed-scope"
-            label="看精选或全部"
+            label={translate("看精选或全部")}
             active={base === "/featured" ? "featured" : "all"}
             items={[
-              { key: "featured", label: "精选", to: scope("/featured"), resetScroll: true, prefetchOnPress: true },
-              { key: "all", label: "全部", to: scope("/all"), resetScroll: true, prefetchOnPress: true },
+              { key: "featured", label: translate("精选"), to: scope("/featured"), resetScroll: true, prefetchOnPress: true },
+              { key: "all", label: translate("全部"), to: scope("/all"), resetScroll: true, prefetchOnPress: true },
             ]}
           />
         }
         actions={
           <>
-            <BarButton label={filtered ? "筛选（已选）" : "筛选"} on={filtered} onClick={() => setSheet(true)}>
+            <BarButton label={filtered ? translate("筛选（已选）") : translate("筛选")} on={filtered} onClick={() => setSheet(true)}>
               <IconFilter size={21} />
               {filtered && <span aria-hidden="true" className="absolute right-[9px] top-[9px] size-[7px] rounded-full bg-accent ring-2 ring-bg" />}
             </BarButton>
@@ -95,9 +98,9 @@ export function FeedBar({ base, category, channel }: { base: "/featured" | "/all
 function FilterSheet({ open, onClose, base, active }: { open: boolean; onClose: () => void; base: string; active: string }) {
   const [params] = useSearchParams();
   return (
-    <Sheet open={open} onClose={onClose} title="筛选">
+    <Sheet open={open} onClose={onClose} title={translate("筛选")}>
       <ul className="mx-4 divide-y divide-line-soft">
-        {filterOptions(base, params, "不限").map((o) => {
+        {filterOptions(base, params, translate("不限")).map((o) => {
           const on = o.key === active;
           return (
             <li key={o.key}>
@@ -107,7 +110,7 @@ function FilterSheet({ open, onClose, base, active }: { open: boolean; onClose: 
                 aria-current={on ? "true" : undefined}
                 className={`-mx-2 rounded-tile px-2 ${sheetChoice(on)}`}
               >
-                {o.label}
+                {ui(o.label)}
                 {on && <ChoiceTick />}
               </Link>
             </li>
@@ -127,13 +130,12 @@ export function ActiveFilters({ base, category, channel, tag }: { base: string; 
   return (
     <div className="flex flex-wrap gap-2 pb-3 pt-1 lg:hidden">
       {label && (
-        <Link to={hrefWith(base, params, { category: null, channel: null })} aria-label={`取消筛选：${label}`} className={chip}>
-          只看{label}
+        <Link to={hrefWith(base, params, { category: null, channel: null })} aria-label={translate("取消筛选：{0}", [label])} className={chip}>{translate("只看")}{ui(label)}
           <IconClose size={14} strokeWidth={2} />
         </Link>
       )}
       {tag && (
-        <Link to={hrefWith(base, params, { tag: null })} aria-label={`取消标签：${tag}`} className={chip}>
+        <Link to={hrefWith(base, params, { tag: null })} aria-label={translate("取消标签：{0}", [tag])} className={chip}>
           <span className="truncate">#{tag}</span>
           <IconClose size={14} strokeWidth={2} className="shrink-0" />
         </Link>
@@ -145,7 +147,7 @@ export function ActiveFilters({ base, category, channel, tag }: { base: string; 
 /** Phones: the magnifier in a bar; the search opens over the page with the keyboard up. */
 function SearchButton() {
   return (
-    <BarButton label="搜索" onClick={(event) => openSearch("", event.currentTarget)}>
+    <BarButton label={translate("搜索")} onClick={(event) => openSearch("", event.currentTarget)}>
       <IconSearch size={21} />
     </BarButton>
   );
@@ -177,9 +179,7 @@ export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: s
   return (
     <Form method="get" action="/all" role="search" className="group relative w-full shrink-0 lg:w-60">
       {hidden}
-      <label htmlFor="site-search" className="sr-only">
-        搜索标题、摘要与正文
-      </label>
+      <label htmlFor="site-search" className="sr-only">{translate("搜索标题、摘要与正文")}</label>
       <IconSearch size={16} className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${searching ? "text-accent" : "text-ink-4 group-focus-within:text-ink-3"}`} />
       <input
         ref={inputRef}
@@ -187,7 +187,7 @@ export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: s
         name="q"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="搜索标题、摘要…"
+        placeholder={translate("搜索标题、摘要…")}
         maxLength={200}
         autoComplete="off"
         className="h-[42px] w-full rounded-full bg-well pl-10 pr-10 text-[14px] text-ink outline-none ring-1 ring-inset ring-line-soft transition-[background-color,box-shadow] placeholder:text-ink-4 hover:ring-line-strong focus:bg-surface focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:ring-accent"
@@ -195,7 +195,7 @@ export function SearchField({ defaultValue = "", keep = {} }: { defaultValue?: s
       {value ? (
         <button
           type="button"
-          aria-label="清空"
+          aria-label={translate("清空")}
           onClick={() => {
             setValue("");
             inputRef.current?.focus();

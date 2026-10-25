@@ -1,3 +1,4 @@
+import { t as translate, ui } from "@aihot/web/lib/i18n";
 // 文章页上的精读：先给三句背景（谁、能干什么、为什么现在要管），再给六段精读和名词小抄。
 // 数据来自模块接口（页面打开时不联网到外部）；没有生成精读的条目什么都不显示，不占版面。
 import { useEffect, useState } from "react";
@@ -65,32 +66,32 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
   return (
     <div className="mt-7 space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-[12px] font-semibold text-ink-3">先看三句话</div>
-        <div className="text-[11.5px] text-ink-4">模型依据本条材料生成，未经验证</div>
+        <div className="text-[12px] font-semibold text-ink-3">{translate("先看三句话")}</div>
+        <div className="text-[11.5px] text-ink-4">{translate("模型依据本条材料生成，未经验证")}</div>
       </div>
 
       <dl className="space-y-2 rounded-card border border-line-soft bg-surface-2 px-4 py-3.5">
         {(
           [
-            ["谁做的", brief.who],
-            ["能干什么", brief.what],
-            ["为什么现在管", brief.why],
+            [translate("谁做的"), brief.who],
+            [translate("能干什么"), brief.what],
+            [translate("为什么现在管"), brief.why],
           ] as Array<[string, string]>
         ).map(([label, value]) => (
-          <div key={label} className="flex gap-3">
-            <dt className="mt-[3px] w-[76px] shrink-0 text-[12px] font-semibold text-ink-4">{label}</dt>
+          <div key={ui(label)} className="flex gap-3">
+            <dt className="mt-[3px] w-[76px] shrink-0 text-[12px] font-semibold text-ink-4">{ui(label)}</dt>
             <dd className="text-[14.5px] leading-[1.75] text-ink-2">{value}</dd>
           </div>
         ))}
       </dl>
 
       <div className="rounded-card border border-line-soft border-l-2 border-l-accent bg-surface px-4 py-3.5">
-        <div className="text-[12px] font-semibold tracking-[0.18em] text-accent">精读</div>
+        <div className="text-[12px] font-semibold tracking-[0.18em] text-accent">{translate("精读")}</div>
         <div className="mt-2 space-y-3.5">
           {SECTIONS.map((section) => (
             <div key={section.key}>
               <div className="flex items-baseline gap-2">
-                <span className="text-[14px] font-bold text-ink">{section.label}</span>
+                <span className="text-[14px] font-bold text-ink">{ui(section.label)}</span>
                 {section.hint && <span className="text-[11.5px] text-ink-4">{section.hint}</span>}
               </div>
               <p className="mt-1 text-[14.5px] leading-[1.75] text-ink-2">{brief[section.key]}</p>
@@ -99,7 +100,7 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
 
           {brief.check.length > 0 && (
             <div>
-              <div className="text-[14px] font-bold text-ink">我是否受影响</div>
+              <div className="text-[14px] font-bold text-ink">{translate("我是否受影响")}</div>
               <ol className="mt-1.5 space-y-1.5">
                 {brief.check.map((step, index) => (
                   <li key={index} className="flex gap-2 text-[14.5px] leading-[1.75] text-ink-2">
@@ -113,7 +114,7 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
 
           {brief.action.length > 0 && (
             <div>
-              <div className="text-[14px] font-bold text-ink">现在该做什么</div>
+              <div className="text-[14px] font-bold text-ink">{translate("现在该做什么")}</div>
               <ul className="mt-1.5 space-y-1.5">
                 {brief.action.map((step, index) => (
                   <li key={index} className="flex gap-2 text-[14.5px] leading-[1.75] text-ink-2">
@@ -128,7 +129,7 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
 
         {brief.terms.length > 0 && (
           <div className="mt-4 border-t border-line-soft pt-3">
-            <div className="text-[12px] font-semibold text-ink-3">名词小抄</div>
+            <div className="text-[12px] font-semibold text-ink-3">{translate("名词小抄")}</div>
             <dl className="mt-1.5 space-y-1">
               {brief.terms.map((term) => (
                 <div key={term.term} className="flex gap-2 text-[13px] leading-[1.7]">

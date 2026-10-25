@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 // 窗口内的发布热度曲线：每小时一条，面积图。没有数据时画一条基线，不留空洞。
 export interface HeatPoint { at: string; count: number }
 
@@ -12,7 +13,7 @@ function tick(at: string): string {
 }
 
 export function HeatCurve({ points }: { points: HeatPoint[] }) {
-  if (points.length === 0) return <p className="px-4 py-10 text-center text-[12.5px] text-ink-4">这个窗口里还没有发布</p>;
+  if (points.length === 0) return <p className="px-4 py-10 text-center text-[12.5px] text-ink-4">{translate("这个窗口里还没有发布")}</p>;
   const max = Math.max(...points.map((p) => p.count), 1);
   const step = points.length > 1 ? (W - PAD * 2) / (points.length - 1) : 0;
   const x = (index: number) => PAD + index * step;
@@ -23,7 +24,7 @@ export function HeatCurve({ points }: { points: HeatPoint[] }) {
 
   return (
     <div className="px-3 pb-2 pt-1">
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-[132px] w-full" preserveAspectRatio="none" role="img" aria-label="发布热度曲线">
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-[132px] w-full" preserveAspectRatio="none" role="img" aria-label={translate("发布热度曲线")}>
         <defs>
           <linearGradient id="heat-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.34" />
@@ -37,7 +38,7 @@ export function HeatCurve({ points }: { points: HeatPoint[] }) {
       </svg>
       <div className="mt-1 flex items-center justify-between text-[10.5px] text-ink-4">
         <span className="num">{tick(points[0]!.at)}</span>
-        <span className="num">峰值 {max} 条/小时</span>
+        <span className="num">{translate("峰值")}{max}{translate("条/小时")}</span>
         <span className="num">{tick(points[points.length - 1]!.at)}</span>
       </div>
     </div>

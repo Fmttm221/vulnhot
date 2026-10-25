@@ -1,3 +1,4 @@
+import { t as translate } from "../../lib/i18n";
 import { useState, type ReactNode } from "react";
 import type { ReportNavigationEntry, ReportKind } from "@aihot/contracts/site";
 import { BarButton, PhoneBar, type BackTarget } from "../../components/shell/PhoneBar";
@@ -36,14 +37,14 @@ export function ReportLayout({ kind, index, current, today, outline = [], back, 
               center={<KindSwitch kind={kind} phone />}
               actions={
                 outline.length > 0 && (
-                  <BarButton label="本期目录" onClick={() => setOutlineOpen(true)}>
+                  <BarButton label={translate("本期目录")} onClick={() => setOutlineOpen(true)}>
                     <IconList size={21} />
                   </BarButton>
                 )
               }
             />
             <ReportPhoneNav kind={kind} index={index} current={current} today={today} />
-            {outline.length > 0 && <OutlineSheet title="本期目录" open={outlineOpen} onClose={() => setOutlineOpen(false)} outline={outline} />}
+            {outline.length > 0 && <OutlineSheet title={translate("本期目录")} open={outlineOpen} onClose={() => setOutlineOpen(false)} outline={outline} />}
           </>
         )}
         <div className="w-full lg:max-w-[1160px]">{children}</div>

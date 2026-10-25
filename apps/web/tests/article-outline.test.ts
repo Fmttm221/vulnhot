@@ -13,12 +13,12 @@ test("a short laptop window keeps several outline entries and can reach the last
     body: { zh: outline.map((o) => `<h2 id="${o.id}">${o.text}</h2><p>${"固定正文。".repeat(100)}</p>`).join(""), original: null, zhKind: "original", complete: true },
   });
   const api = fakeApi((url) => (url.pathname === "/api/site/items/outline-short" ? item : undefined));
-  const browser = await chromium.launch({ channel: "chromium" });
+  const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" });
   let web: WebServer | undefined;
   try {
     web = await startWebServer(api);
     for (const height of [657, 560]) {
-      const page = await browser.newPage({ viewport: { width: 1366, height }, reducedMotion: "reduce" });
+      const page = await browser.newPage({ locale: "zh-CN",  viewport: { width: 1366, height }, reducedMotion: "reduce" });
       await page.goto(web.origin + "/items/outline-short");
       const nav = page.getByRole("navigation", { name: "本文目录" });
       await expect(nav).toBeVisible();
@@ -46,7 +46,7 @@ test("outline keyboard scrolling stays inside its boundary in WebKit", async () 
   const web = await startWebServer(fakeApi(url => url.pathname === "/api/site/items/outline-keys" ? item : undefined));
   const browser = await webkit.launch();
   try {
-    const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
+    const page = await browser.newPage({ locale: "zh-CN",  viewport: { width: 1366, height: 768 }, reducedMotion: "reduce" });
     await visit(page, web.origin + "/items/outline-keys");
     const nav = page.getByRole("navigation", { name: "本文目录" });
     await expect(nav).toBeVisible();

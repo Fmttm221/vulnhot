@@ -1,9 +1,10 @@
+import { t as translate, uiCopy } from "./lib/i18n";
 import {
   isRouteErrorResponse, Link, Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useLocation, useNavigation, useRouteError, useRouteLoaderData,
   type ShouldRevalidateFunction,
 } from "react-router";
 import type { SiteMeta } from "@aihot/contracts/site";
-import { SITE } from "@aihot/site";
+import { SITE as SOURCE_SITE } from "@aihot/site";
 import { RingMark } from "@aihot/site/brand/Logo.tsx";
 import { useEffect, useState, type ReactNode } from "react";
 import type { Route } from "./+types/root";
@@ -20,36 +21,43 @@ import { apiGet } from "./lib/api.server";
 import { useHydratedFlag } from "./lib/hydration";
 import { titled } from "./lib/seo";
 import { webModules } from "./site-modules";
+import { requestLocale, currentLocale } from './lib/locale';
+import { OriginalLanguageNote } from './components/ui/OriginalLanguageNote';
+
+const SITE = SOURCE_SITE;
+
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.ico", sizes: "any" },
   { rel: "icon", type: "image/png", href: "/icon.png" },
   { rel: "apple-touch-icon", href: "/apple-icon.png" },
   { rel: "manifest", href: "/manifest.webmanifest" },
-  { rel: "alternate", type: "application/rss+xml", title: `${SITE.name} — 精选`, href: "/feed.xml" },
+  { rel: "alternate", type: "application/rss+xml", title: translate("{0} — 精选", [SITE.name]), href: "/feed.xml" },
 ];
 
 /** The release rendering this document: once a newer one is deployed, a render error reloads the page (entry.client). */
 export async function loader({ request }: Route.LoaderArgs) {
   const release = process.env.AIHOT_RELEASE ?? null;
+  const locale = requestLocale(request);
   try {
     const meta = await apiGet<SiteMeta>("/api/site/meta", {
       headers: Object.assign({}, ...webModules().map((m) => m.root?.documentHeaders?.(request) ?? {})),
       signal: request.signal,
     });
-    return { ...meta, release };
+    return { ...meta, release, locale };
   } catch {
-    return { changelogVersion: null, release };
+    return { changelogVersion: null, release, locale };
   }
 }
 
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const SITE = uiCopy(SOURCE_SITE);
   const site = useRouteLoaderData<typeof loader>("root");
   const [documentRelease] = useState(site?.release ?? null);
   return (
-    <html lang={SITE.locale} suppressHydrationWarning>
+    <html lang={site?.locale ?? currentLocale()} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         {documentRelease && <meta name="aihot-release" content={documentRelease} />}
@@ -75,7 +83,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export function meta({ error }: Route.MetaArgs) {
   if (!error) return [];
   const notFound = isRouteErrorResponse(error) && error.status === 404;
-  return [{ title: titled(notFound ? "页面不存在" : "暂时无法加载") }, { name: "robots", content: "noindex" }];
+  return [{ title: titled(notFound ? translate("页面不存在") : translate("暂时无法加载")) }, { name: "robots", content: "noindex" }];
 }
 
 /** Sidebar, main column and phone tab bar around a page (or an error). */
@@ -87,15 +95,14 @@ function SiteShell({ changelogVersion, children }: { changelogVersion: string | 
   return (
     <div className="flex min-h-dvh">
       <NavigationProgress active={navigation.state === "loading"} />
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">
-        跳到正文
-      </a>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">{translate("跳到正文")}</a>
       <Sidebar changelogVersion={changelogVersion} />
       {/* Phone shell (≤ 960px): each page's top bar (PhoneBar), one centred column, the tab bar below.
           Desktop: the page fills the main area up to the list width (--page-max-wide), centred beyond it. */}
       <main id="main" className="min-w-0 flex-1 pb-[calc(72px+env(safe-area-inset-bottom))] lg:px-7 lg:pb-[72px] lg:pt-6">
         <div className="mx-auto w-full max-w-[640px] pl-[var(--gutter-l)] pr-[var(--gutter-r)] lg:max-w-[var(--page-max-wide)] lg:px-0">
           {webModules().map((m) => m.root?.Top && <m.root.Top key={m.name} />)}
+          <OriginalLanguageNote />
           {children}
         </div>
       </main>
@@ -144,20 +151,14 @@ export function ErrorBoundary() {
       <div className="max-w-sm text-center">
         <RingMark className="mx-auto mb-5 size-10 text-accent" />
         <div className="mono text-[12px] text-ink-4">{status}</div>
-        <h1 className="mt-1.5 text-[20px] font-bold text-ink">{notFound ? "找不到这个页面" : "暂时无法加载"}</h1>
+        <h1 className="mt-1.5 text-[20px] font-bold text-ink">{notFound ? translate("找不到这个页面") : translate("暂时无法加载")}</h1>
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3">
-          {notFound ? "链接可能有误，或者这条内容已经下架。" : "页面暂时无法显示，请重新加载后再试。"}
+          {notFound ? translate("链接可能有误，或者这条内容已经下架。") : translate("页面暂时无法显示，请重新加载后再试。")}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2.5">
-          {!notFound && <Link reloadDocument to={pathname + search + hash} className={buttonClass("primary")}>
-            重新加载
-          </Link>}
-          <Link reloadDocument to="/" className={buttonClass(notFound ? "primary" : "secondary")}>
-            回到精选
-          </Link>
-          <Link reloadDocument to="/all" className={buttonClass("secondary")}>
-            浏览全部动态
-          </Link>
+          {!notFound && <Link reloadDocument to={pathname + search + hash} className={buttonClass("primary")}>{translate("重新加载")}</Link>}
+          <Link reloadDocument to="/" className={buttonClass(notFound ? "primary" : "secondary")}>{translate("回到精选")}</Link>
+          <Link reloadDocument to="/all" className={buttonClass("secondary")}>{translate("浏览全部动态")}</Link>
         </div>
       </div>
     </div>

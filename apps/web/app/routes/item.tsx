@@ -1,9 +1,10 @@
+import { t as translate, uiCopy } from "../lib/i18n";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState , type ComponentType } from "react";
 import { Await, isRouteErrorResponse, Link, useAsyncError, useLoaderData, useNavigate, useRevalidator, type ClientLoaderFunctionArgs } from "react-router";
 import type { Route } from "./+types/item";
 import type { FeedItemSummary, SiteItemDetail } from "@aihot/contracts/site";
 import { webModules } from "../site-modules";
-import { ITEM_COPY, SITE } from "@aihot/site";
+import { ITEM_COPY as SOURCE_ITEM_COPY, SITE as SOURCE_SITE } from "@aihot/site";
 import { cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { articleLd, breadcrumbLd, pageMeta, siteUrl, titled } from "../lib/seo";
@@ -28,6 +29,7 @@ import { takePreview } from "../features/item/preview";
 import { IconArrowLeft, IconCopy, IconDownload, IconExternal, IconImage, IconMenu, IconMore, IconShare } from "../components/icons";
 import { BarButton, PhoneBar } from "../components/shell/PhoneBar";
 import { isPhone, type Screen } from "../components/shell/screens";
+
 
 export const handle: Screen = { home: "featured", toolbar: true };
 export { pageHeaders as headers } from "../lib/api.server";
@@ -78,7 +80,8 @@ export async function clientLoader(args: ClientLoaderFunctionArgs) {
 clientLoader.hydrate = true as const;
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: titled("内容不存在") }, { name: "robots", content: "noindex" }];
+  const SITE = uiCopy(SOURCE_SITE);
+  if (!loaderData) return [{ title: titled(translate("内容不存在")) }, { name: "robots", content: "noindex" }];
   const { item } = loaderData;
   if (!item) return [{ title: titled(loaderData.preview.title) }];
   return pageMeta({
@@ -92,7 +95,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
       articleLd({ path: `/items/${item.id}`, headline: item.title, description: item.summary, publishedAt: item.publishedAt, image: `/og/items/${item.id}.png`, basedOn: item.links.original }),
       breadcrumbLd([
         { name: SITE.name, path: "/" },
-        { name: item.selected ? "精选" : "全部动态", path: item.selected ? "/" : "/all" },
+        { name: item.selected ? translate("精选") : translate("全部动态"), path: item.selected ? "/" : "/all" },
         { name: item.title, path: `/items/${item.id}` },
       ]),
     ],
@@ -147,8 +150,8 @@ function ArticleOutline({ outline }: { outline: SiteItemDetail["outline"] }) {
     if ((up && nav.scrollTop <= 0) || (down && nav.scrollTop + nav.clientHeight >= nav.scrollHeight - 1)) e.preventDefault();
   };
   return (
-    <RailSection title="本文目录" shrink>
-      <nav ref={nav} aria-label="本文目录" tabIndex={overscroll ? 0 : undefined} onKeyDown={containKeys} className={`scrollbar-thin min-h-[calc(6*(12.5px*1.375+8px))] overflow-y-auto ${overscroll}`}>
+    <RailSection title={translate("本文目录")} shrink>
+      <nav ref={nav} aria-label={translate("本文目录")} tabIndex={overscroll ? 0 : undefined} onKeyDown={containKeys} className={`scrollbar-thin min-h-[calc(6*(12.5px*1.375+8px))] overflow-y-auto ${overscroll}`}>
         <ol className="space-y-0.5 border-l border-line">
           {outline.map((o) => (
             <li key={o.id}>
@@ -224,19 +227,20 @@ export default function ItemPage() {
 
 /** Phones, while the article loads: what the card showed, in the article's own places. */
 function ItemPreview({ preview }: { preview: FeedItemSummary }) {
+  const ITEM_COPY = uiCopy(SOURCE_ITEM_COPY);
   const [toast, setToast] = useToast();
   const isX = preview.channel === "x" && !!preview.x;
   // Without a reliable date from the original, the card's time is when it was collected, and says so.
   const shownAt = preview.publishedAt ?? preview.timelineAt;
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-8">
-      <PhoneBar back={{ to: preview.selected ? "/" : "/all", label: preview.selected ? "精选" : "全部" }} title={isX ? preview.x!.authorName : preview.title} />
+      <PhoneBar back={{ to: preview.selected ? "/" : "/all", label: preview.selected ? translate("精选") : translate("全部") }} title={isX ? preview.x!.authorName : preview.title} />
       <article className="pb-6 pt-3" aria-busy="true">
         <div className="mb-3 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-ink-3">
           <span className="font-semibold text-ink-2">{isX ? preview.x!.authorName : preview.source.name}</span>
           {isX && <span>· @{preview.x!.handle} · X</span>}
           <span>·</span>
-          {!preview.publishedAt && <span>收录于</span>}
+          {!preview.publishedAt && <span>{translate("收录于")}</span>}
           <time dateTime={shownAt} className="mono">{fullDateTime(shownAt)}</time>
           {preview.selected && <span className="ml-1">{preview.sameEvent ? <SameEventBadge /> : <SelectedBadge />}</span>}
           {shownScore(preview.score) !== null && (
@@ -248,7 +252,7 @@ function ItemPreview({ preview }: { preview: FeedItemSummary }) {
         {!isX && <h1 data-page-title="" className="text-[26px] font-bold leading-[1.38] tracking-[-0.01em] text-ink">{preview.title}</h1>}
         {preview.summary && (
           <section className={isX ? "mt-4" : "mt-7"}>
-            <div className="mb-2 text-[12px] font-semibold text-accent">{isX && preview.summary.replace(/\s+/g, " ").trim() === preview.title ? "原文" : "AI 导读"}</div>
+            <div className="mb-2 text-[12px] font-semibold text-accent">{isX && preview.summary.replace(/\s+/g, " ").trim() === preview.title ? translate("原文") : translate("AI 导读")}</div>
             <p className="text-[18px] leading-[1.7] text-ink">{preview.summary}</p>
           </section>
         )}
@@ -266,9 +270,9 @@ function ItemPreview({ preview }: { preview: FeedItemSummary }) {
       </article>
       <ReaderToolbar
         item={preview}
-        originalLabel={isX ? "原推" : "原文"}
+        originalLabel={isX ? translate("原推") : translate("原文")}
         onShare={async () => {
-          if ((await shareOrCopy(preview)) === "copied") setToast("链接已复制");
+          if ((await shareOrCopy(preview)) === "copied") setToast(translate("链接已复制"));
         }}
       />
       <Toast text={toast} />
@@ -283,14 +287,12 @@ function ItemGone() {
   const gone = isRouteErrorResponse(error) && error.status === 404;
   return (
     <div className="mx-auto max-w-sm pb-8">
-      <PhoneBar back={{ to: "/featured", label: "精选" }} />
+      <PhoneBar back={{ to: "/featured", label: translate("精选") }} />
       <div className="py-24 text-center">
-        <div className="text-[20px] font-bold text-ink">{gone ? "找不到这篇内容" : "暂时无法加载"}</div>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3">{gone ? "链接可能有误，或者这篇内容已经下架。" : "服务暂时繁忙，请稍后再试。"}</p>
+        <div className="text-[20px] font-bold text-ink">{gone ? translate("找不到这篇内容") : translate("暂时无法加载")}</div>
+        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-3">{gone ? translate("链接可能有误，或者这篇内容已经下架。") : translate("服务暂时繁忙，请稍后再试。")}</p>
         {!gone && (
-          <button type="button" onClick={() => void revalidator.revalidate()} className="mt-6 h-11 rounded-full border border-line-strong bg-surface px-5 text-[14px] font-medium text-ink-2 active:bg-bg-sunk">
-            重试
-          </button>
+          <button type="button" onClick={() => void revalidator.revalidate()} className="mt-6 h-11 rounded-full border border-line-strong bg-surface px-5 text-[14px] font-medium text-ink-2 active:bg-bg-sunk">{translate("重试")}</button>
         )}
       </div>
     </div>
@@ -298,6 +300,7 @@ function ItemGone() {
 }
 
 function ItemView({ item }: { item: SiteItemDetail }) {
+  const ITEM_COPY = uiCopy(SOURCE_ITEM_COPY);
   const navigate = useNavigate();
   const hasTranslation = item.hasTranslation;
   const lang = item.bodyLanguage;
@@ -314,12 +317,12 @@ function ItemView({ item }: { item: SiteItemDetail }) {
   };
   const share = async () => {
     const r = await shareOrCopy(item);
-    if (r === "copied") setToast("链接已复制");
+    if (r === "copied") setToast(translate("链接已复制"));
   };
   const copyLink = async () => {
     try {
       await copyText(`${siteUrl()}/items/${item.id}`);
-      setToast("链接已复制");
+      setToast(translate("链接已复制"));
     } catch {
       // clipboard unavailable
     }
@@ -329,21 +332,21 @@ function ItemView({ item }: { item: SiteItemDetail }) {
       const res = await fetch(`/items/${item.id}/markdown`);
       if (!res.ok) throw new Error(String(res.status));
       await copyText(await res.text());
-      setToast("Markdown 已复制");
+      setToast(translate("Markdown 已复制"));
     } catch {
-      setToast("复制失败，请在浏览器中打开后导出");
+      setToast(translate("复制失败，请在浏览器中打开后导出"));
     }
   };
 
   const bodyHtml = lang === "zh" ? (item.body?.zh ?? item.body?.original) : (item.body?.original ?? item.body?.zh);
-  const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? "正文 · AI 翻译" : lang === "original" ? "正文 · 原文" : "正文";
+  const bodyLabel = !item.body ? null : lang === "zh" && item.body.zhKind === "translation" ? translate("正文 · AI 翻译") : lang === "original" ? translate("正文 · 原文") : translate("正文");
   const isX = item.channel === "x" && !!item.x;
   // Without a reliable date from the original, the time shown is when it was collected, labelled as such.
   const shownAt = item.publishedAt ?? item.discoveredAt;
-  const timeLabel = item.publishedAt ? "发布时间" : "收录时间";
+  const timeLabel = item.publishedAt ? translate("发布时间") : translate("收录时间");
   const summaryOnly = item.readingMode === "summary-only";
   const showOutline = item.outline.length >= 3;
-  const originalLabel = isX ? "在 X 查看原推" : "打开原文";
+  const originalLabel = isX ? translate("在 X 查看原推") : translate("打开原文");
 
   const related = item.relatedStories.filter((s) => s.publicId !== item.story?.publicId);
 
@@ -354,23 +357,20 @@ function ItemView({ item }: { item: SiteItemDetail }) {
   // In the left rail (a flex column) it keeps its own height and width.
   const backButton = (
     <button type="button" onClick={back} className="-ml-1.5 inline-flex h-8 shrink-0 items-center gap-1.5 self-start rounded-full px-1.5 text-[13px] text-ink-3 transition-colors hover:text-ink">
-      <IconArrowLeft size={16} /> 返回
-    </button>
+      <IconArrowLeft size={16} />{translate("返回")}</button>
   );
   const moreMenu = (
-    <Menu label="更多操作" trigger={<IconMenu size={17} />}>
+    <Menu label={translate("更多操作")} trigger={<IconMenu size={17} />}>
       {(close) => (
         <>
-          <MenuItem icon={<IconShare size={15} />} onSelect={() => { close(); void share(); }}>分享链接</MenuItem>
-          <MenuItem icon={<IconImage size={15} />} onSelect={() => { close(); openPoster(); }}>生成分享海报</MenuItem>
-          <MenuItem icon={<IconCopy size={15} />} onSelect={() => { close(); void copyLink(); }}>复制链接</MenuItem>
+          <MenuItem icon={<IconShare size={15} />} onSelect={() => { close(); void share(); }}>{translate("分享链接")}</MenuItem>
+          <MenuItem icon={<IconImage size={15} />} onSelect={() => { close(); openPoster(); }}>{translate("生成分享海报")}</MenuItem>
+          <MenuItem icon={<IconCopy size={15} />} onSelect={() => { close(); void copyLink(); }}>{translate("复制链接")}</MenuItem>
           {item.markdownAvailable &&
             (inWeChat() ? (
-              <MenuItem icon={<IconDownload size={15} />} onSelect={() => { close(); void copyMarkdown(); }}>复制 Markdown</MenuItem>
+              <MenuItem icon={<IconDownload size={15} />} onSelect={() => { close(); void copyMarkdown(); }}>{translate("复制 Markdown")}</MenuItem>
             ) : (
-              <MenuItem icon={<IconDownload size={15} />} href={`/items/${item.id}/markdown`} download onSelect={close}>
-                导出 Markdown
-              </MenuItem>
+              <MenuItem icon={<IconDownload size={15} />} href={`/items/${item.id}/markdown`} download onSelect={close}>{translate("导出 Markdown")}</MenuItem>
             ))}
         </>
       )}
@@ -378,12 +378,12 @@ function ItemView({ item }: { item: SiteItemDetail }) {
   );
   // Phones: the same actions as a sheet from the bar (分享 and 原文 are on the toolbar).
   const phoneActions: ActionRow[] = [
-    { key: "poster", label: "生成分享海报", icon: <IconImage size={20} />, onSelect: openPoster },
-    { key: "copy", label: "复制链接", icon: <IconCopy size={20} />, onSelect: () => void copyLink() },
+    { key: "poster", label: translate("生成分享海报"), icon: <IconImage size={20} />, onSelect: openPoster },
+    { key: "copy", label: translate("复制链接"), icon: <IconCopy size={20} />, onSelect: () => void copyLink() },
     ...(item.markdownAvailable
       ? [inWeChat()
-        ? { key: "markdown", label: "复制 Markdown", icon: <IconDownload size={20} />, onSelect: () => void copyMarkdown() }
-        : { key: "markdown", label: "导出 Markdown", icon: <IconDownload size={20} />, href: `/items/${item.id}/markdown`, download: true }]
+        ? { key: "markdown", label: translate("复制 Markdown"), icon: <IconDownload size={20} />, onSelect: () => void copyMarkdown() }
+        : { key: "markdown", label: translate("导出 Markdown"), icon: <IconDownload size={20} />, href: `/items/${item.id}/markdown`, download: true }]
       : []),
   ];
   // Desktop actions head the right rail, one row as tall as 返回 at the head of the left one.
@@ -411,7 +411,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
   // Rails: the piece's facts on the left (wide screens), the editor's notes on the right, the outline
   // under the facts (or under the notes when only the right rail shows).
   const facts = (
-    <RailSection title="来源">
+    <RailSection title={translate("来源")}>
       <div className="text-[14px] font-semibold leading-snug text-ink">{isX ? item.x!.authorName : item.source.name}</div>
       <div className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
         {isX ? `@${item.x!.handle} · X` : item.author ?? hostOf(item.links.original)}
@@ -434,10 +434,10 @@ function ItemView({ item }: { item: SiteItemDetail }) {
           <p className="text-[13.5px] leading-[1.8] text-ink-2">{item.reason}</p>
         </RailSection>
       ) : (
-        verdict && <RailSection title={shownScore(item.score) !== null ? "AI 评分" : undefined}>{verdict}</RailSection>
+        verdict && <RailSection title={shownScore(item.score) !== null ? translate("AI 评分") : undefined}>{verdict}</RailSection>
       )}
       {item.topics.length > 0 && (
-        <RailSection title="主题">
+        <RailSection title={translate("主题")}>
           <div className="flex flex-wrap gap-1.5">
             {item.topics.map((t) => (
               <Link viewTransition key={t.slug} to={`/topics/${t.slug}`} className="chip">
@@ -448,7 +448,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
         </RailSection>
       )}
       {item.tags.length > 0 && (
-        <RailSection title="标签">
+        <RailSection title={translate("标签")}>
           <div className="flex flex-wrap gap-1.5">
             {item.tags.slice(0, 8).map((t) => (
               <Link key={t} to={`/all?tag=${encodeURIComponent(t)}`} className="chip">
@@ -467,10 +467,10 @@ function ItemView({ item }: { item: SiteItemDetail }) {
 
       {/* Phones: back to where the reader came from, the title once it has scrolled away, more actions. */}
       <PhoneBar
-        back={{ to: item.selected ? "/" : "/all", label: item.selected ? "精选" : "全部" }}
+        back={{ to: item.selected ? "/" : "/all", label: item.selected ? translate("精选") : translate("全部") }}
         title={isX ? item.x!.authorName : item.title}
         actions={
-          <BarButton label="更多操作" onClick={() => setActionsOpen(true)}>
+          <BarButton label={translate("更多操作")} onClick={() => setActionsOpen(true)}>
             <IconMore size={22} />
           </BarButton>
         }
@@ -501,7 +501,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
             {isX && <span>· @{item.x!.handle} · X</span>}
             {item.author && !isX && <span>· {item.author}</span>}
             <span>·</span>
-            {!item.publishedAt && <span>收录于</span>}
+            {!item.publishedAt && <span>{translate("收录于")}</span>}
             <time dateTime={shownAt} className="mono">{fullDateTime(shownAt)}</time>
             <span suppressHydrationWarning>· {relativeTime(shownAt)}</span>
             {item.selected && (
@@ -520,7 +520,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
 
           {item.summary && (!isX || item.summary.replace(/\s+/g, " ").trim() !== item.title) && (
             <section className={isX ? "mt-4" : "mt-7 xl:mt-8"}>
-              <div className="mb-2 text-[12px] font-semibold text-accent">{summaryOnly ? "摘要" : "AI 导读"}</div>
+              <div className="mb-2 text-[12px] font-semibold text-accent">{summaryOnly ? translate("摘要") : translate("AI 导读")}</div>
               <p className="text-[18px] leading-[1.7] text-ink xl:text-[20px] xl:leading-[1.7]">{item.summary}</p>
             </section>
           )}
@@ -535,9 +535,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
           )}
 
           {item.sameEvent && (
-            <p className="mt-5 text-[13px] leading-relaxed text-ink-4">
-              同一件事，精选收录的是
-              <Link viewTransition to={`/items/${item.sameEvent.id}`} className="text-ink-3 transition-colors hover:text-accent">
+            <p className="mt-5 text-[13px] leading-relaxed text-ink-4">{translate("同一件事，精选收录的是")}<Link viewTransition to={`/items/${item.sameEvent.id}`} className="text-ink-3 transition-colors hover:text-accent">
                 《{item.sameEvent.title}》
               </Link>
             </p>
@@ -550,7 +548,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
             </div>
           )}
 
-          {summaryOnly && <p className="mt-7 rounded-control bg-bg-sunk px-4 py-3 text-[13.5px] leading-relaxed text-ink-3">应来源方要求，这里只提供摘要与原文入口。完整内容请阅读原文。</p>}
+          {summaryOnly && <p className="mt-7 rounded-control bg-bg-sunk px-4 py-3 text-[13.5px] leading-relaxed text-ink-3">{translate("应来源方要求，这里只提供摘要与原文入口。完整内容请阅读原文。")}</p>}
 
           {item.body && bodyHtml && (
             <section className="mt-9 border-t border-line pt-4 xl:mt-10">
@@ -560,17 +558,17 @@ function ItemView({ item }: { item: SiteItemDetail }) {
                   <PillTabs
                     size="xs"
                     layoutId="item-body-lang"
-                    label="正文语言"
+                    label={translate("正文语言")}
                     active={lang}
                     items={[
-                      { key: "zh", label: "中文", prefetchOnPress: true, replace: true, to: `/items/${item.id}` },
-                      { key: "original", label: "原文", prefetchOnPress: true, replace: true, to: `/items/${item.id}/original` },
+                      { key: "zh", label: translate("中文"), prefetchOnPress: true, replace: true, to: `/items/${item.id}` },
+                      { key: "original", label: translate("原文"), prefetchOnPress: true, replace: true, to: `/items/${item.id}/original` },
                     ]}
                   />
                 )}
               </div>
               {hasTranslation && lang === "zh" && !item.body.complete && (
-                <p className="mb-5 rounded-control bg-bg-sunk px-3 py-2 text-[13px] text-ink-3">译文尚不完整，完整内容请切换到原文。</p>
+                <p className="mb-5 rounded-control bg-bg-sunk px-3 py-2 text-[13px] text-ink-3">{translate("译文尚不完整，完整内容请切换到原文。")}</p>
               )}
               <ArticleBody html={bodyHtml} />
             </section>
@@ -579,9 +577,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
           {isX && item.x!.media.length > 0 && <MediaGallery media={item.x!.media} postUrl={item.links.original} />}
           {isX && item.x!.quoted?.text && <QuotedPost quoted={item.x!.quoted} original={lang === "original"} />}
 
-          <p className="mt-8 text-[13px] text-ink-4">
-            来源：
-            <a href={item.links.original} target="_blank" rel="noopener noreferrer" className="text-ink-3 hover:text-accent">
+          <p className="mt-8 text-[13px] text-ink-4">{translate("来源：")}<a href={item.links.original} target="_blank" rel="noopener noreferrer" className="text-ink-3 hover:text-accent">
               {isX ? item.x!.authorName : item.source.name}
             </a>
             <span> · {hostOf(item.links.original)}</span>
@@ -606,7 +602,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
 
           {related.length > 0 && (
             <section className="mt-8">
-              <h2 className="mb-2 text-[14px] font-semibold text-ink">相关事件</h2>
+              <h2 className="mb-2 text-[14px] font-semibold text-ink">{translate("相关事件")}</h2>
               <ul className="divide-y divide-line-soft">
                 {related.map((s) => (
                   <li key={s.publicId}>
@@ -624,7 +620,7 @@ function ItemView({ item }: { item: SiteItemDetail }) {
       <ReaderToolbar
         item={item}
         originalUrl={item.links.original}
-        originalLabel={isX ? "原推" : "原文"}
+        originalLabel={isX ? translate("原推") : translate("原文")}
         onOutline={showOutline ? () => setOutlineOpen(true) : undefined}
         onShare={() => void share()}
       />

@@ -1,3 +1,4 @@
+import { t as translate, ui } from "../../lib/i18n";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import type { HeatPoint } from "@aihot/contracts/site";
 import { monthDayTime } from "../../lib/format";
@@ -63,7 +64,7 @@ function timeTicks(t0: number, t1: number): Array<{ t: number; label: string; wi
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[12px] text-ink-4">{label}</dt>
+      <dt className="text-[12px] text-ink-4">{ui(label)}</dt>
       <dd className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">{children}</dd>
     </div>
   );
@@ -121,7 +122,7 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
     return { seen, last, peak, change, ticks, x, y, line, area, labels: timeTicks(t0, t1) };
   }, [series]);
   if (!geometry) {
-    return <p className="rounded-tile bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-4">还没有足够的连续观测数据，暂不绘制趋势。</p>;
+    return <p className="rounded-tile bg-bg-sunk px-4 py-8 text-center text-[13px] text-ink-4">{translate("还没有足够的连续观测数据，暂不绘制趋势。")}</p>;
   }
   const { seen, last, peak, change, ticks, x, y, line, area, labels } = geometry;
   const cur = active !== null ? seen[active] : null;
@@ -139,14 +140,14 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
     <div>
       <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-start sm:justify-between">
         <dl className="grid grid-cols-3 gap-x-5 sm:flex sm:gap-x-10">
-          <Stat label="可比范围当前">
+          <Stat label={translate("可比范围当前")}>
             <span className="mono text-[22px] font-semibold leading-none tracking-[-0.02em] text-ink">{Math.round(last.p!.heat)}</span>
           </Stat>
-          <Stat label="可比范围峰值">
+          <Stat label={translate("可比范围峰值")}>
             <span className="mono text-[22px] font-semibold leading-none tracking-[-0.02em] text-ink">{Math.round(peak.p!.heat)}</span>
             <span className="num text-[12px] text-ink-4">{monthDayTime(new Date(peak.t).toISOString())}</span>
           </Stat>
-          <Stat label="近 24 小时变化">
+          <Stat label={translate("近 24 小时变化")}>
             <span className={`mono text-[22px] font-semibold leading-none tracking-[-0.02em] ${change === null ? "text-ink-4" : change > 0 ? "text-hot" : "text-ink"}`}>
               {change === null ? "–" : `${change > 0 ? "+" : ""}${change}%`}
             </span>
@@ -156,7 +157,7 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
           <PillTabs
             size="xs"
             layoutId="heat-range"
-            label="时间范围"
+            label={translate("时间范围")}
             active={String(range!.hours)}
             onSelect={(key) => {
               setActive(null);
@@ -177,7 +178,7 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
         <div
           className="relative size-full touch-pan-y select-none rounded-mark outline-offset-4"
           role="img"
-          aria-label={`热度走势：当前 ${Math.round(last.p!.heat)}，峰值 ${Math.round(peak.p!.heat)}`}
+          aria-label={translate("热度走势：当前 {0}，峰值 {1}", [Math.round(last.p!.heat), Math.round(peak.p!.heat)])}
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === "ArrowRight") setActive((a) => Math.min(seen.length - 1, a === null ? seen.length - 1 : a + 1));
@@ -222,11 +223,9 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
               style={x(cur.t) > 55 ? { right: `calc(${100 - x(cur.t)}% + 10px)` } : { left: `calc(${x(cur.t)}% + 10px)` }}
             >
               <div className="num text-ink-4">{monthDayTime(new Date(cur.t).toISOString())}</div>
-              <div className="text-ink-2">
-                热度 <b className="num font-semibold text-ink">{cur.p!.heat.toFixed(1)}</b>
+              <div className="text-ink-2">{translate("热度")}<b className="num font-semibold text-ink">{cur.p!.heat.toFixed(1)}</b>
                 <span className="mx-1 text-ink-4">·</span>
-                <span className="num">{cur.p!.participants}</span> 位参与者
-              </div>
+                <span className="num">{cur.p!.participants}</span>{translate("位参与者")}</div>
             </div>
           )}
         </div>
@@ -240,14 +239,12 @@ export function HeatChart({ points: all }: { points: HeatPoint[] }) {
               className={`num absolute whitespace-nowrap text-[11px] leading-none text-ink-4 ${left < 6 ? "" : left > 94 ? "-translate-x-full" : "-translate-x-1/2"} ${wide ? "max-sm:hidden" : ""}`}
               style={{ left: `${left}%` }}
             >
-              {label}
+              {ui(label)}
             </span>
           );
         })}
       </div>
-      <p className="mt-4 text-[12px] leading-relaxed text-ink-4">
-        趋势仅比较持续完整观测到的相同主体，范围可能小于当前热度统计。移动指针或点击图表查看每小时热度；键盘可用左右方向键切换。
-      </p>
+      <p className="mt-4 text-[12px] leading-relaxed text-ink-4">{translate("趋势仅比较持续完整观测到的相同主体，范围可能小于当前热度统计。移动指针或点击图表查看每小时热度；键盘可用左右方向键切换。")}</p>
     </div>
   );
 }

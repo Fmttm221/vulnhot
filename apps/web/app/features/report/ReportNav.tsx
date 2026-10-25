@@ -1,3 +1,4 @@
+import { t as translate, ui } from "../../lib/i18n";
 // Moving between reports: the archive column on desktop; on phones the kind switch in the bar
 // (ReportLayout) and recent-issue chips under it.
 import { IntentLink } from "../../components/ui/IntentLink";
@@ -14,7 +15,7 @@ export function KindSwitch({ kind, phone = false }: { kind: ReportKind; phone?: 
       fill={!phone}
       size={phone ? "sm" : "md"}
       layoutId={phone ? "report-kind-phone" : "report-kind"}
-      label="切换日报、周报、月报"
+      label={translate("切换日报、周报、月报")}
       active={kind}
       items={KINDS.map((k) => ({ key: k, label: REPORT_NAMES[k], to: KIND_PATH[k], resetScroll: phone, prefetchOnPress: true }))}
     />
@@ -30,15 +31,14 @@ export function ReportArchive({ kind, index, current }: { kind: ReportKind; inde
       <div className="pb-4 pt-8">
         <KindSwitch kind={kind} />
       </div>
-      <div className="border-b border-line-strong pb-2 pl-1 text-[11.5px] font-semibold tracking-[0.3em] text-ink">往期</div>
-      <nav aria-label={`${REPORT_NAMES[kind]}历史`} className="scrollbar-thin -mr-3 flex-1 overflow-y-auto pb-6 pr-3">
+      <div className="border-b border-line-strong pb-2 pl-1 text-[11.5px] font-semibold tracking-[0.3em] text-ink">{translate("往期")}</div>
+      <nav aria-label={translate("{0}历史", [REPORT_NAMES[kind]])} className="scrollbar-thin -mr-3 flex-1 overflow-y-auto pb-6 pr-3">
         {groups.map((g) => (
           <ArchiveGroup key={g.id} g={g} kind={kind} current={current} initiallyOpen={g.id === openId} />
         ))}
       </nav>
       {kind === "daily" && (
-        <IntentLink to="/daily/archive" className="flex h-12 shrink-0 items-center justify-between border-t border-line pl-1 pr-1.5 text-[12.5px] font-medium text-ink-2 transition-colors hover:text-accent">
-          日报合订本 <IconChevronRight size={14} />
+        <IntentLink to="/daily/archive" className="flex h-12 shrink-0 items-center justify-between border-t border-line pl-1 pr-1.5 text-[12.5px] font-medium text-ink-2 transition-colors hover:text-accent">{translate("日报合订本")}<IconChevronRight size={14} />
         </IntentLink>
       )}
     </aside>
@@ -67,7 +67,7 @@ function ArchiveGroup({ g, kind, current, initiallyOpen }: {
     <details open={open} onToggle={(event) => setOpen(event.currentTarget.open)} className="disclosure group/month border-b border-line">
       <summary className="flex h-11 items-center gap-1.5 pl-1 pr-1.5 text-[13px] text-ink transition-colors hover:text-accent">
         <IconChevronRight size={14} className="text-ink-4 transition-transform duration-200 group-open/month:rotate-90" />
-        <span className="flex-1 font-semibold">{g.label}</span>
+        <span className="flex-1 font-semibold">{ui(g.label)}</span>
         <span className="num text-[11.5px] text-ink-4">{g.entries.length}</span>
       </summary>
       {(kind !== "daily" || open) && <ul className="space-y-0.5 pb-3">
@@ -92,7 +92,7 @@ function ArchiveGroup({ g, kind, current, initiallyOpen }: {
           );
         })}
       </ul>}
-      {kind === "daily" && !open && <noscript><a href="/daily/archive">查看完整日报归档</a></noscript>}
+      {kind === "daily" && !open && <noscript><a href="/daily/archive">{translate("查看完整日报归档")}</a></noscript>}
     </details>
   );
 }
@@ -104,7 +104,7 @@ export function ReportPhoneNav({ kind, index, current, today }: { kind: ReportKi
   const chip = "inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-[13px] transition-colors";
   if (recent.length === 0) return null;
   return (
-    <nav aria-label={`最近的${REPORT_NAMES[kind]}`} className="scrollbar-none bleed flex gap-2 overflow-x-auto pb-1 pt-1.5 lg:hidden">
+    <nav aria-label={translate("最近的{0}", [REPORT_NAMES[kind]])} className="scrollbar-none bleed flex gap-2 overflow-x-auto pb-1 pt-1.5 lg:hidden">
       {recent.map((e) => {
         const on = e.key === current;
         return (
@@ -114,9 +114,7 @@ export function ReportPhoneNav({ kind, index, current, today }: { kind: ReportKi
         );
       })}
       {index.length > 3 && (
-        <IntentLink to={earlier} viewTransition={kind === "daily"} className={`${chip} border-line-strong bg-surface text-ink-2 active:bg-bg-sunk`}>
-          更早
-        </IntentLink>
+        <IntentLink to={earlier} viewTransition={kind === "daily"} className={`${chip} border-line-strong bg-surface text-ink-2 active:bg-bg-sunk`}>{translate("更早")}</IntentLink>
       )}
     </nav>
   );

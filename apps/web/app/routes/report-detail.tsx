@@ -1,7 +1,8 @@
+import { t as translate, uiCopy, ui } from "../lib/i18n";
 import { data, useLoaderData } from "react-router";
 import type { Route } from "./+types/report-detail";
 import { REPORT_NAMES, type ReportDetail, type ReportNavigationResponse, type ReportKind } from "@aihot/contracts/site";
-import { SITE, subjectAfter } from "@aihot/site";
+import { SITE as SOURCE_SITE, subjectAfter } from "@aihot/site";
 import { apiGet, cachedPage, loadOr404 } from "../lib/api.server";
 import { pageReuse } from "../lib/page-reuse";
 import { pageMeta, reportLd, reportTitle, titled } from "../lib/seo";
@@ -10,6 +11,7 @@ import { ReportLayout } from "../features/report/ReportLayout";
 import { ReportPaper, reportOutline } from "../features/report/ReportPaper";
 import { feedLink, kindFromPath } from "../features/report/format";
 import type { Screen } from "../components/shell/screens";
+
 
 export const handle: Screen = { tab: "daily", name: "日报" };
 export { pageHeaders as headers } from "../lib/api.server";
@@ -33,9 +35,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: titled("报告不存在") }, { name: "robots", content: "noindex" }];
+  const SITE = uiCopy(SOURCE_SITE);
+  if (!loaderData) return [{ title: titled(translate("报告不存在")) }, { name: "robots", content: "noindex" }];
   const r = loaderData.report;
-  const description = r.lead?.leadParagraph ?? r.overview?.slice(0, 150) ?? `${SITE.name} ${r.key} ${subjectAfter("的", REPORT_NAMES[r.kind])}。`;
+  const description = r.lead?.leadParagraph ?? r.overview?.slice(0, 150) ?? `${SITE.name} ${r.key} ${ui(subjectAfter("的", REPORT_NAMES[r.kind]))}。`;
   const path = `/${r.kind}/${r.key}`;
   return [...pageMeta({
     title: reportTitle(r),

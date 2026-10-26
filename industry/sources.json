@@ -204,7 +204,7 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
-      "enabled": false,
+      "enabled": true,
       "_off_reason": "登记库镜像：与 NVD/GHSA 覆盖重复，均分 30.7，1.7 天烧 2.06M tokens 只产出 1 条精选"
     },
     {
@@ -228,7 +228,7 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
-      "enabled": false,
+      "enabled": true,
       "_off_reason": "正文抽取 100% unconfirmed，0 产出"
     },
     {
@@ -603,7 +603,7 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
-      "enabled": false,
+      "enabled": true,
       "_off_reason": "登记库镜像：均分 10.6，127 条 0 产出，烧 1.97M tokens"
     },
     {
@@ -733,7 +733,7 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
-      "enabled": false,
+      "enabled": true,
       "_off_reason": "正文抽取 100% unconfirmed，0 产出"
     },
     {
@@ -1311,29 +1311,6 @@
       "_off_reason": "正文抽取 100% unconfirmed（付费墙/反爬），模型只能凭标题猜，0 产出"
     },
     {
-      "id": "rss-dbappsecurity-ti",
-      "name": "安恒威胁情报中心",
-      "kind": "rss",
-      "config": {
-        "feedUrl": "https://ti.dbappsecurity.com.cn/blog/feed",
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 240,
-      "tags": [
-        "中文",
-        "cn",
-        "apt",
-        "threat-intel"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false
-    },
-    {
       "id": "rss-hackread",
       "name": "Hackread",
       "kind": "rss",
@@ -1672,361 +1649,6 @@
       "syndicate_fulltext": false
     },
     {
-      "id": "x-vxunderground",
-      "name": "X：vx-underground (@vxunderground)",
-      "kind": "x_search",
-      "config": {
-        "query": "from:vxunderground -filter:replies",
-        "searchType": "Latest",
-        "publisherRole": "person"
-      },
-      "tier": "T1_5",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "X",
-        "待填 SOCIALDATA_API_KEY"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "x-watchtowr",
-      "name": "X：watchTowr Labs (@watchtowr)",
-      "kind": "x_search",
-      "config": {
-        "query": "from:watchtowr -filter:replies",
-        "searchType": "Latest",
-        "publisherRole": "person"
-      },
-      "tier": "T1_5",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "X",
-        "待填 SOCIALDATA_API_KEY"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "x-projectdiscovery",
-      "name": "X：ProjectDiscovery (@projectdiscovery)",
-      "kind": "x_search",
-      "config": {
-        "query": "from:projectdiscovery -filter:replies",
-        "searchType": "Latest",
-        "publisherRole": "person"
-      },
-      "tier": "T1_5",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "X",
-        "待填 SOCIALDATA_API_KEY"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "x-malwrhunterteam",
-      "name": "X：MalwareHunterTeam (@malwrhunterteam)",
-      "kind": "x_search",
-      "config": {
-        "query": "from:malwrhunterteam -filter:replies",
-        "searchType": "Latest",
-        "publisherRole": "person"
-      },
-      "tier": "T1_5",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "X",
-        "待填 SOCIALDATA_API_KEY"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "x-campuscodi",
-      "name": "X：Catalin Cimpanu (@campuscodi)",
-      "kind": "x_search",
-      "config": {
-        "query": "from:campuscodi -filter:replies",
-        "searchType": "Latest",
-        "publisherRole": "person"
-      },
-      "tier": "T1_5",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "X",
-        "待填 SOCIALDATA_API_KEY"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "x-shadowserver",
-      "name": "X：ShadowServer (@ShadowServer)",
-      "kind": "x_search",
-      "config": {
-        "query": "from:ShadowServer -filter:replies",
-        "searchType": "Latest",
-        "publisherRole": "person"
-      },
-      "tier": "T1_5",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 60,
-      "tags": [
-        "X",
-        "待填 SOCIALDATA_API_KEY"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "mp-e5ae89e585a8",
-      "name": "公众号：安全内参",
-      "kind": "mp_account",
-      "config": {
-        "ghid": "",
-        "nickname": "安全内参"
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "公众号",
-        "待填 DAJIALA_KEY 与 ghid",
-        "行业深度与政策解读"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "mp-e5beaee6ada5",
-      "name": "公众号：微步在线研究响应中心",
-      "kind": "mp_account",
-      "config": {
-        "ghid": "",
-        "nickname": "微步在线研究响应中心"
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "公众号",
-        "待填 DAJIALA_KEY 与 ghid",
-        "威胁情报与应急响应"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "mp-e5a587e5ae89",
-      "name": "公众号：奇安信 CERT",
-      "kind": "mp_account",
-      "config": {
-        "ghid": "",
-        "nickname": "奇安信 CERT"
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "公众号",
-        "待填 DAJIALA_KEY 与 ghid",
-        "国内漏洞预警与应急通告"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "mp-e995bfe4baad",
-      "name": "公众号：长亭科技",
-      "kind": "mp_account",
-      "config": {
-        "ghid": "",
-        "nickname": "长亭科技"
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "公众号",
-        "待填 DAJIALA_KEY 与 ghid",
-        "安全研究与漏洞分析"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "jina-qianxin-ti",
-      "name": "奇安信威胁情报中心（Jina 渲染）",
-      "kind": "web_list",
-      "config": {
-        "url": "https://r.jina.ai/https://ti.qianxin.com/blog/",
-        "parseMode": "markdown",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "allowUrlPrefixes": [
-          "https://ti.qianxin.com/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "待填 JINA_API_KEY",
-        "国内"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "jina-cnvd",
-      "name": "CNVD 漏洞公告（Jina 渲染）",
-      "kind": "web_list",
-      "config": {
-        "url": "https://r.jina.ai/https://www.cnvd.org.cn/flaw/list",
-        "parseMode": "markdown",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "allowUrlPrefixes": [
-          "https://www.cnvd.org.cn/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "待填 JINA_API_KEY",
-        "国内"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "jina-cnnvd",
-      "name": "CNNVD 漏洞预警（Jina 渲染）",
-      "kind": "web_list",
-      "config": {
-        "url": "https://r.jina.ai/https://www.cnnvd.org.cn/home/warn",
-        "parseMode": "markdown",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "allowUrlPrefixes": [
-          "https://www.cnnvd.org.cn/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "待填 JINA_API_KEY",
-        "国内"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "jina-oscs",
-      "name": "OSCS 开源安全情报（Jina 渲染）",
-      "kind": "web_list",
-      "config": {
-        "url": "https://r.jina.ai/https://www.oscs1024.com/cm",
-        "parseMode": "markdown",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "allowUrlPrefixes": [
-          "https://www.oscs1024.com/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "待填 JINA_API_KEY",
-        "国内"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
-      "id": "jina-cert360",
-      "name": "360CERT 安全通告（Jina 渲染）",
-      "kind": "web_list",
-      "config": {
-        "url": "https://r.jina.ai/https://cert.360.cn/warning",
-        "parseMode": "markdown",
-        "itemSelector": "li",
-        "linkSelector": "a",
-        "titleSelector": "a",
-        "allowUrlPrefixes": [
-          "https://cert.360.cn/"
-        ],
-        "_aihot": {
-          "initialBackfillLimit": 8
-        }
-      },
-      "tier": "T2",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 180,
-      "tags": [
-        "待填 JINA_API_KEY",
-        "国内"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": false
-    },
-    {
       "id": "ext-nvd-cve",
       "name": "NVD 新增 CVE（外部推送）",
       "kind": "external",
@@ -2039,24 +1661,6 @@
         "external",
         "待推送脚本",
         "官方 API 限速、无 RSS；用脚本按 updated 拉取后推送"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true
-    },
-    {
-      "id": "ext-osv",
-      "name": "OSV 开源漏洞库（外部推送）",
-      "kind": "external",
-      "config": {},
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "external",
-        "待推送脚本",
-        "POST 查询接口；脚本按生态批量拉取后推送"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,
@@ -2093,42 +1697,6 @@
         "external",
         "待推送脚本",
         "仓库提交流；脚本把新增恶意包推送进来"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true
-    },
-    {
-      "id": "ext-cnvd-login",
-      "name": "CNVD 详情（带会话）（外部推送）",
-      "kind": "external",
-      "config": {},
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "external",
-        "待推送脚本",
-        "站点有防护，需要带 cookie 抓取后推送"
-      ],
-      "site_fulltext": false,
-      "syndicate_fulltext": false,
-      "enabled": true
-    },
-    {
-      "id": "ext-tg-security",
-      "name": "Telegram 安全频道（外部推送）",
-      "kind": "external",
-      "config": {},
-      "tier": "T1",
-      "owner_entity_id": null,
-      "participation_mode": "editorial",
-      "interval_minutes": 120,
-      "tags": [
-        "external",
-        "待推送脚本",
-        "需要 Bot/API 凭据，由转发脚本推送"
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false,

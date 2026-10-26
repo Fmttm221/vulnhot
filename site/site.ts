@@ -291,8 +291,10 @@ export const DEPLOYMENT = {
    * 每次重定向重新按目标域名选路，直连仍检查实际连接地址。
    */
   directFetchHosts: [
+    "access.redhat.com",
     "api.anquanke.com",
     "api.github.com",
+    "api.msrc.microsoft.com",
     "arstechnica.com",
     "blog.assetnote.io",
     "blog.cloudflare.com",
@@ -328,6 +330,7 @@ export const DEPLOYMENT = {
     "www.cisa.gov",
     "www.csoonline.com",
     "www.cybersecuritydive.com",
+    "www.debian.org",
     "www.drupal.org",
     "www.exploit-db.com",
     "www.fortiguard.com",

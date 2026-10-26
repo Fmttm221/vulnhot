@@ -297,7 +297,6 @@ export const DEPLOYMENT = {
     "blog.assetnote.io",
     "blog.cloudflare.com",
     "blog.exodusintel.com",
-    "blog.google",
     "blog.mozilla.org",
     "blog.nsfocus.net",
     "blog.qualys.com",

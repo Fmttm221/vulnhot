@@ -32,7 +32,7 @@ function Prose({ text }: { text: string }) {
     <>
       {parts.map((part, index) =>
         part.mark ? (
-          <mark key={index} className="rounded-[3px] bg-hot-soft px-[3px] font-semibold text-hot">
+          <mark key={index} className="rounded-mark bg-hot-soft px-[3px] font-semibold text-hot">
             {part.text}
           </mark>
         ) : (

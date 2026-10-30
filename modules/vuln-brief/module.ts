@@ -1,5 +1,5 @@
-// 漏洞精读：精选里的漏洞打开后，先"认名字"（Drupal Core 这类名字逐个解释），再给"背景三句话"
-// 和"小白也能看懂的精读六段"（modules/vuln-brief）。
+// 漏洞精读：精选里的漏洞打开后，给一篇不懂安全的人也读得懂的短文（名字就地解释、重点标色），
+// 后面跟可执行的自查与处置（modules/vuln-brief）。
 // 只对带 CVE 编号、且精选评分 ≥ 60 的条目花钱，一天还有总量上限。
 import { defineModule } from "@aihot/contracts/modules";
 

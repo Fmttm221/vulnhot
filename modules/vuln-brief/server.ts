@@ -1,5 +1,5 @@
 // 漏洞精读的后端（modules/vuln-brief）：定时挑出"值得精读"的精选，把本条正文 + 客观信号 +
-// 同一事件的其他报道拼成材料，排队调用一次模型，写出"先认名字 + 背景三句话 + 精读六段"。
+// 同一事件的其他报道拼成材料，排队调用一次模型，写出一篇连贯的短文 + 自查 + 处置。
 // 语料、回执与预算都走引擎的 providers（chatJson 内含回执与熔断），本模块只管自己的表与接口。
 //
 // 三条纪律：
@@ -32,16 +32,11 @@ const text = (max: number) =>
   z.string().trim().min(1).transform((value) => (value.length > max ? `${value.slice(0, max - 1)}…` : value));
 
 const BriefSchema = z.object({
-  who: text(200),
-  what: text(200),
-  why: text(200),
-  story: text(600),
-  usage: text(600),
-  impact: text(600),
+  // 一篇连起来的短文（段落之间空行）；重点用 ==…== 标，页面渲染成主题色。
+  body: text(1800),
   // 工具或情报发布这类条目，读者没有可自查的步骤：允许留空，页面上不画这一段。
   check: z.array(text(200)).max(6).catch([]),
   action: z.array(text(200)).max(6).catch([]),
-  terms: z.array(z.object({ term: text(80), plain: text(300) })).max(8).catch([]),
   caveats: z.array(text(300)).max(3).catch([]),
 });
 
@@ -65,7 +60,7 @@ async function madeToday(): Promise<number> {
 
 /**
  * 还要写精读的精选：带 CVE 编号、精选评分达到 SCORE_FLOOR、最近 WINDOW_DAYS 天内、还没写过（或分析已更新）。
- * 排队顺序：进 KEV 的先写，其次 EPSS 高、GitHub 上相关仓库多、评分高、发布新的。
+ * 排队顺序：读者最可能打开的是新的，所以新的先写；同一批里评分高、进 KEV、EPSS 高的靠前。
  */
 export async function pendingBriefs(limit: number): Promise<string[]> {
   const rows = await sql<{ article_id: string }[]>`
@@ -95,7 +90,7 @@ export async function pendingBriefs(limit: number): Promise<string[]> {
       GROUP BY sel.article_id, sel.score, sel.published_at
     )
     SELECT article_id FROM scored
-    ORDER BY in_kev DESC, epss DESC, repo_total DESC, score DESC NULLS LAST, published_at DESC NULLS LAST
+    ORDER BY published_at DESC NULLS LAST, score DESC NULLS LAST, in_kev DESC, epss DESC
     LIMIT ${limit}`;
   return rows.map((r) => r.article_id);
 }
@@ -147,7 +142,7 @@ export async function composeBrief(articleId: string): Promise<"ok" | "skipped">
     model,
     purpose: "brief",
     subject: `article:${row.article_id}@${row.revision}`,
-    promptVersion: "vuln-brief-2",
+    promptVersion: "vuln-brief-3",
     system: BRIEF_SYSTEM,
     user: briefUser({
       title: row.title,
@@ -181,17 +176,13 @@ export async function composeBrief(articleId: string): Promise<"ok" | "skipped">
     caveats: result.data.caveats,
   };
   await sql`
-    INSERT INTO vuln_brief (article_id, revision, model, who_zh, what_zh, why_zh, story_zh, usage_zh, impact_zh,
-                            check_steps, actions, terms, facts)
-    VALUES (${row.article_id}, ${row.revision}, ${model}, ${result.data.who}, ${result.data.what}, ${result.data.why},
-            ${result.data.story}, ${result.data.usage}, ${result.data.impact},
+    INSERT INTO vuln_brief (article_id, revision, model, body_zh, check_steps, actions, facts)
+    VALUES (${row.article_id}, ${row.revision}, ${model}, ${result.data.body},
             ${sql.json(result.data.check as never)}, ${sql.json(result.data.action as never)},
-            ${sql.json(result.data.terms as never)}, ${sql.json(facts as never)})
+            ${sql.json(facts as never)})
     ON CONFLICT (article_id) DO UPDATE SET
-      revision = EXCLUDED.revision, model = EXCLUDED.model, who_zh = EXCLUDED.who_zh,
-      what_zh = EXCLUDED.what_zh, why_zh = EXCLUDED.why_zh, story_zh = EXCLUDED.story_zh,
-      usage_zh = EXCLUDED.usage_zh, impact_zh = EXCLUDED.impact_zh,
-      check_steps = EXCLUDED.check_steps, actions = EXCLUDED.actions, terms = EXCLUDED.terms,
+      revision = EXCLUDED.revision, model = EXCLUDED.model, body_zh = EXCLUDED.body_zh,
+      check_steps = EXCLUDED.check_steps, actions = EXCLUDED.actions,
       facts = EXCLUDED.facts, updated_at = now()`;
   return "ok";
 }
@@ -219,24 +210,17 @@ export const vulnBriefServer = defineServerModule({
     // 网页在文章页上读精读。公开、匿名、只读；与公开页面一样只服务已公开的精选。
     app.get("/api/site/brief/:id", async (req, reply) => {
       const { id } = req.params as { id: string };
-      const [row] = await sql<{ who_zh: string; what_zh: string; why_zh: string; story_zh: string; usage_zh: string; impact_zh: string; check_steps: string[]; actions: string[]; terms: Array<{ term: string; plain: string }>; facts: { caveats?: string[] }; model: string | null; updated_at: Date }[]>`
-        SELECT v.who_zh, v.what_zh, v.why_zh, v.story_zh, v.usage_zh, v.impact_zh,
-               v.check_steps, v.actions, v.terms, v.facts, v.model, v.updated_at
+      const [row] = await sql<{ body_zh: string; check_steps: string[]; actions: string[]; facts: { caveats?: string[] }; model: string | null; updated_at: Date }[]>`
+        SELECT v.body_zh, v.check_steps, v.actions, v.facts, v.model, v.updated_at
         FROM vuln_brief v JOIN publications p ON p.article_id = v.article_id
         WHERE v.article_id = ${id} AND p.visibility = 'public' AND p.selected`;
       reply.header("cache-control", "public, s-maxage=300, stale-while-revalidate=600");
       if (!row) return { brief: null };
       return {
         brief: {
-          who: row.who_zh,
-          what: row.what_zh,
-          why: row.why_zh,
-          story: row.story_zh,
-          usage: row.usage_zh,
-          impact: row.impact_zh,
+          body: row.body_zh,
           check: row.check_steps ?? [],
           action: row.actions ?? [],
-          terms: row.terms ?? [],
           caveats: row.facts?.caveats ?? [],
           updatedAt: row.updated_at?.toISOString?.() ?? null,
         },

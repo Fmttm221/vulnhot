@@ -1,5 +1,6 @@
-// 漏洞精读：给一条精选补上"背景三句话"和"小白也能看懂的精读六段"（modules/vuln-brief）。
-// 只对满足触发条件的条目花钱（进 KEV / EPSS 高 / 有公开 PoC / 一手源 CVSS≥9 / 影响面命中）。
+// 漏洞精读：精选里的漏洞打开后，先"认名字"（Drupal Core 这类名字逐个解释），再给"背景三句话"
+// 和"小白也能看懂的精读六段"（modules/vuln-brief）。
+// 只对带 CVE 编号、且精选评分 ≥ 60 的条目花钱，一天还有总量上限。
 import { defineModule } from "@aihot/contracts/modules";
 
 export const vulnBrief = defineModule({

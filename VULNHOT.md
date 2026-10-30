@@ -66,17 +66,16 @@
 |---|---|
 | `modules/vulnhot-themes/` | 额外两套配色：**黑客（幽灵绿）** 与 **白客（白帽蓝）**，页面在 `/appearance`，侧栏与「我的」页都有入口。做法是模块在 `<head>` 注入一段先于绘制运行的脚本，给 `<html>` 打上 `data-vulnhot` 并塞入一套 CSS 变量；框架的浅色/深夜/跟随系统照旧生效，两套偏好各管各的（用框架的深浅色开关一动，就退出额外配色）。黑客配色会在内容后面挂一块 `canvas` 画缓慢下落的代码流：尊重 `prefers-reduced-motion`、标签页切到后台就停 |
 | `modules/vuln-signals/` | 文章页上的**客观信号**：CVSS / EPSS / KEV 三值 + 风险画像雷达 + 进展阶段条 + 同事实的进展时间线 + 攻击面标签 + 「这条信息有误？」入口（点它会把草稿写进本站的草稿键，跳到引擎的反馈页并预填）。表 `cve_risk_signals`、`cve_repo_counts`（迁移 `0901` / `0902`）；四个定时任务分别同步 CISA KEV（每 6 小时）、FIRST EPSS（每天 05:20）、NVD CVSS（每 10 分钟补 18 个，未认证 5 次/30 秒所以慢）、GitHub PoC 仓库计数（每 15 分钟补 12 个）；接口 `GET /api/site/signals/:id`。**只抓我们自己收录过的 CVE**（从精选标题与摘要里抽编号），不为全库付代价 |
-| `modules/vuln-perspective/` | 每条精选的**红队视角 / 蓝队视角**。模块自带表 `vuln_perspective`（迁移 `0900_vuln_perspective.sql`）、自己的队列 `vuln-perspective.compose`、每 4 分钟挑 4 条缺这两段的精选补写，读取接口 `GET /api/site/perspective/:id`；提示词在模块自己的 `prompts/perspective.md`（改它不用改代码），模型步骤名 `perspective`（可用 `PERSPECTIVE_MODEL` 单独换模型）。**硬规则：只写材料支持的事实、不产出可执行 payload、不推断利用状态**；材料不足时写明“材料未给出”，并单独列出 `caveats` |
-| `modules/vuln-brief/` | 给精选补一份**不懂安全的人也能看懂的精读**：先给“谁做的 / 能干什么 / 为什么现在管”三句话，再给六段（发生了什么、这东西是什么、攻击者能干什么、我是否受影响的可执行自查、现在该做什么、名词小抄）。表 `vuln_brief`（迁移 `0903` / `0904`）、队列 `vuln-brief.compose`、每 10 分钟挑 2 条补写，接口 `GET /api/site/brief/:id`，提示词在 `prompts/brief.md`，模型步骤名 `brief`（可用 `BRIEF_MODEL` 单独换模型）。**不是每条精选都精读**：只在进 CISA KEV、EPSS ≥ 0.1、有公开 PoC 仓库、一手源且 CVSS ≥ 9.0、或影响面命中白名单时触发，并且一天最多 `MAX_PER_DAY` 条（默认 12）——这是这个模块的预算闸门。材料由本条正文 + 客观信号（CVSS/EPSS/KEV/PoC 仓库数）+ 同一事件的其他报道拼成，素材不足时输出 `caveats` 而不是补编 |
+| `modules/vuln-brief/` | 精选里的**漏洞**打开后的精读（原先红蓝视角的位置）。开头是「先认名字」：把标题里出现、非从业者不认识的产品/项目/机构/工具（如 Drupal Core、gitlab-onigmo-scanner）逐个用一句话说清是什么、谁在用；然后是“谁做的 / 能干什么 / 为什么现在管”三句话和六段（发生了什么、这东西是什么、攻击者能干什么、我是否受影响的可执行自查、现在该做什么）。表 `vuln_brief`（迁移 `0903` / `0904`）、队列 `vuln-brief.compose`、每 5 分钟挑 3 条补写，接口 `GET /api/site/brief/:id`，提示词在 `prompts/brief.md`，模型步骤名 `brief`（可用 `BRIEF_MODEL` 单独换模型）。**不是每条精选都精读**：只给同时满足①带 CVE 编号 ②精选评分 ≥ 60 的条目写，一天最多 `MAX_PER_DAY` 条（默认 50）——这是这个模块的预算闸门；排队时进 KEV、EPSS 高、有公开 PoC 的先写。材料由本条正文 + 客观信号（CVSS/EPSS/KEV/PoC 仓库数）+ 同一事件的其他报道拼成，素材不足时输出 `caveats` 而不是补编 |
 
-**一处框架改动（有意为之，已最小化）**：文章详情页原本没有任何模块插口，红蓝视角无法挂上去。所以在 `apps/web/app/modules.ts` 加了一个通用插口 `WebModule.itemPage`，并在 `apps/web/app/routes/item.tsx` 里用十几行把它渲染在 AI 导读下面。这两处都是**通用插口**（任何模块都能用），合并上游时冲突面很小；除此之外 `apps/`、`packages/` 未改。
+**一处框架改动（有意为之，已最小化）**：文章详情页原本没有任何模块插口，模块的部件无法挂上去。所以在 `apps/web/app/modules.ts` 加了一个通用插口 `WebModule.itemPage`，并在 `apps/web/app/routes/item.tsx` 里用十几行把它渲染在 AI 导读下面。这两处都是**通用插口**（任何模块都能用），合并上游时冲突面很小；除此之外 `apps/`、`packages/` 未改。
 
 
 ### 2.4 没改的东西（红线）
 
 - `apps/`、`packages/`：除上面说的 `itemPage` 插口（2 个文件、十几行）外没有改动；其余全部落在 `site/`、`industry/`、`modules/`。
 - 主题色仍用框架自带的强调色（定义在 `apps/web/app/app.css`），没有为了改品牌去动框架 CSS。
-- `database/migrations/`：没有新增迁移。
+- `database/migrations/`：只加过 `0905_drop_vuln_perspective.sql`（红蓝视角下线时删除它的表），没有别的迁移。
 
 ### 2.5 `scripts/ingest-pusher.ts`（框架装不下的信源怎么接）
 

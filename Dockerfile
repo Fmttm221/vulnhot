@@ -18,7 +18,6 @@ COPY packages/contracts/package.json packages/contracts/
 COPY industry/package.json industry/
 COPY site/package.json site/
 COPY modules/vulnhot-themes/package.json modules/vulnhot-themes/
-COPY modules/vuln-perspective/package.json modules/vuln-perspective/
 COPY modules/vuln-signals/package.json modules/vuln-signals/
 COPY modules/vuln-brief/package.json modules/vuln-brief/
 RUN npm ci --no-audit --no-fund ${NPM_REGISTRY:+--registry=$NPM_REGISTRY}

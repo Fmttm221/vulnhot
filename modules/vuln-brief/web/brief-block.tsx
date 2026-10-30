@@ -1,5 +1,6 @@
 import { t as translate, ui } from "@aihot/web/lib/i18n";
-// 文章页上的精读：先给三句背景（谁、能干什么、为什么现在要管），再给六段精读和名词小抄。
+// 文章页上的精读：先认名字（标题里出现、门外汉不认识的产品/机构/工具，一句话说清），
+// 再给三句背景（谁、能干什么、为什么现在要管），最后是六段精读。
 // 数据来自模块接口（页面打开时不联网到外部）；没有生成精读的条目什么都不显示，不占版面。
 import { useEffect, useState } from "react";
 import type { SiteItemDetail } from "@aihot/contracts/site";
@@ -34,8 +35,8 @@ const SECTIONS: Array<{ key: "story" | "usage" | "impact"; label: string; hint: 
 
 export function BriefBlock({ item }: { item: SiteItemDetail }) {
   const text = `${item.title} ${item.summary ?? ""}`;
-  // 没有漏洞编号的信息不查：精读只为具体漏洞写，避免每条都发一次请求。
-  const eligible = CVE_RE.test(text);
+  // 只有精选里的漏洞才写精读：别的条目不查，避免每条都发一次请求。
+  const eligible = item.selected && CVE_RE.test(text);
   const [brief, setBrief] = useState<Brief | null>(() => cache.get(item.id) ?? null);
 
   useEffect(() => {
@@ -66,9 +67,26 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
   return (
     <div className="mt-7 space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="text-[12px] font-semibold text-ink-3">{translate("先看三句话")}</div>
+        <div className="text-[12px] font-semibold text-ink-3">{translate("精读")}</div>
         <div className="text-[11.5px] text-ink-4">{translate("模型依据本条材料生成，未经验证")}</div>
       </div>
+
+      {brief.terms.length > 0 && (
+        <div className="rounded-card border border-line-soft bg-surface-2 px-4 py-3.5">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-[12px] font-semibold tracking-[0.18em] text-accent">{ui("先认名字")}</span>
+            <span className="text-[11.5px] text-ink-4">{ui("标题里出现、你可能不认识的名字，一句话说清")}</span>
+          </div>
+          <dl className="mt-2 space-y-1.5">
+            {brief.terms.map((term) => (
+              <div key={term.term} className="flex flex-col gap-0.5 text-[13.5px] leading-[1.7] sm:flex-row sm:gap-2">
+                <dt className="mono shrink-0 font-semibold text-ink">{term.term}</dt>
+                <dd className="text-ink-2">{term.plain}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
 
       <dl className="space-y-2 rounded-card border border-line-soft bg-surface-2 px-4 py-3.5">
         {(
@@ -86,13 +104,12 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
       </dl>
 
       <div className="rounded-card border border-line-soft border-l-2 border-l-accent bg-surface px-4 py-3.5">
-        <div className="text-[12px] font-semibold tracking-[0.18em] text-accent">{translate("精读")}</div>
-        <div className="mt-2 space-y-3.5">
+        <div className="mt-0.5 space-y-3.5">
           {SECTIONS.map((section) => (
             <div key={section.key}>
               <div className="flex items-baseline gap-2">
                 <span className="text-[14px] font-bold text-ink">{ui(section.label)}</span>
-                {section.hint && <span className="text-[11.5px] text-ink-4">{section.hint}</span>}
+                {section.hint && <span className="text-[11.5px] text-ink-4">{ui(section.hint)}</span>}
               </div>
               <p className="mt-1 text-[14.5px] leading-[1.75] text-ink-2">{brief[section.key]}</p>
             </div>
@@ -126,20 +143,6 @@ export function BriefBlock({ item }: { item: SiteItemDetail }) {
             </div>
           )}
         </div>
-
-        {brief.terms.length > 0 && (
-          <div className="mt-4 border-t border-line-soft pt-3">
-            <div className="text-[12px] font-semibold text-ink-3">{translate("名词小抄")}</div>
-            <dl className="mt-1.5 space-y-1">
-              {brief.terms.map((term) => (
-                <div key={term.term} className="flex gap-2 text-[13px] leading-[1.7]">
-                  <dt className="mono shrink-0 font-semibold text-ink-2">{term.term}</dt>
-                  <dd className="text-ink-3">{term.plain}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        )}
       </div>
 
       {brief.caveats.length > 0 && (

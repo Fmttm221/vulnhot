@@ -2,7 +2,6 @@
 import type { WebModule } from "@aihot/web/modules";
 import { vulnBriefWeb } from "@aihot/vuln-brief/web";
 import { vulnhotThemesWeb } from "@aihot/vulnhot-themes/web";
-import { vulnPerspectiveWeb } from "@aihot/vuln-perspective/web";
 import { vulnSignalsWeb } from "@aihot/vuln-signals/web";
 
-export const WEB_MODULES: readonly WebModule[] = [vulnhotThemesWeb, vulnSignalsWeb, vulnPerspectiveWeb, vulnBriefWeb];
+export const WEB_MODULES: readonly WebModule[] = [vulnhotThemesWeb, vulnSignalsWeb, vulnBriefWeb];

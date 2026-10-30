@@ -1,10 +1,10 @@
 // 漏洞精读的后端（modules/vuln-brief）：定时挑出"值得精读"的精选，把本条正文 + 客观信号 +
-// 同一事件的其他报道拼成材料，排队调用一次模型，写出"背景三句话 + 精读六段 + 名词小抄"。
+// 同一事件的其他报道拼成材料，排队调用一次模型，写出"先认名字 + 背景三句话 + 精读六段"。
 // 语料、回执与预算都走引擎的 providers（chatJson 内含回执与熔断），本模块只管自己的表与接口。
 //
 // 三条纪律：
-// 1. 不是每条精选都精读：只有满足触发条件（进 KEV / EPSS 高 / 有公开 PoC / 一手源 CVSS≥9 /
-//    影响面命中）的条目才花钱，一天还有总量上限。
+// 1. 不是每条精选都精读：只给带 CVE 编号、且精选评分达到 SCORE_FLOOR 的条目写，一天还有总量上限；
+//    排队时进 KEV、EPSS 高、有公开 PoC 的先写。
 // 2. 只服务已公开的精选，与公开页面同一口径；撤销或更正后接口立刻不再返回。
 // 3. 页面只读自己的表，不在读者打开页面时联网。
 import { z } from "zod";
@@ -17,21 +17,13 @@ import { modelFor } from "@aihot/backend/editorial/models";
 import { BRIEF_SYSTEM, briefUser, type SiblingReport } from "./prompt.ts";
 
 /** 一次最多补几条：控制单次运行的花费，也让新精选先出现。 */
-const PER_RUN = 2;
+const PER_RUN = 3;
 /** 一天最多生成几条精读：这就是这个模块的预算闸门，超了等明天。 */
-const MAX_PER_DAY = 30;
+const MAX_PER_DAY = 50;
 /** 只补最近这么多天的精选：更老的是首次导入的存量，不再为它付费。 */
 const WINDOW_DAYS = 30;
-/** 触发条件：EPSS 下限、一手源 CVSS 下限。 */
-const EPSS_FLOOR = 0.1;
-const CVSS_FLOOR = 9.0;
-/** 影响面白名单：命中标题或摘要里的产品名也算触发（这些一旦出事，读者最需要看。 */
-const WATCH = [
-  "nginx", "openssl", "tomcat", "vcenter", "esxi", "confluence", "jira", "citrix", "netscaler",
-  "fortinet", "fortigate", "ivanti", "exchange", "sharepoint", "wordpress", "jenkins", "kubernetes",
-  "struts", "log4j", "spring", "chrome", "firefox", "big-ip", "f5", "palo alto", "sonicwall",
-  "vpn", "防火墙", "路由器", "插件",
-];
+/** 门槛：精选评分达到这个分才写精读（评分是 0–100）。 */
+const SCORE_FLOOR = 60;
 
 const CVE_RE = /CVE-\d{4}-\d{4,7}/g;
 
@@ -42,9 +34,10 @@ const BriefSchema = z.object({
   story: z.string().trim().min(1).max(800),
   usage: z.string().trim().min(1).max(800),
   impact: z.string().trim().min(1).max(800),
-  check: z.array(z.string().trim().min(1).max(300)).min(1).max(4),
-  action: z.array(z.string().trim().min(1).max(300)).min(1).max(4),
-  terms: z.array(z.object({ term: z.string().trim().max(60), plain: z.string().trim().max(240) })).max(5).catch([]),
+  // 工具或情报发布这类条目，读者没有可自查的步骤：允许留空，页面上不画这一段。
+  check: z.array(z.string().trim().min(1).max(300)).max(4).default([]),
+  action: z.array(z.string().trim().min(1).max(300)).max(4).default([]),
+  terms: z.array(z.object({ term: z.string().trim().max(60), plain: z.string().trim().max(240) })).max(6).catch([]),
   caveats: z.array(z.string().trim().max(300)).max(3).catch([]),
 });
 
@@ -67,41 +60,38 @@ async function madeToday(): Promise<number> {
 }
 
 /**
- * 还需要精读、且值得精读的精选（新的在前）。
- * 触发条件任一成立即可：进 KEV、EPSS ≥ 0.1、有公开 PoC 仓库、一手源且 CVSS ≥ 9.0、影响面命中白名单。
+ * 还要写精读的精选：带 CVE 编号、精选评分达到 SCORE_FLOOR、最近 WINDOW_DAYS 天内、还没写过（或分析已更新）。
+ * 排队顺序：进 KEV 的先写，其次 EPSS 高、GitHub 上相关仓库多、评分高、发布新的。
  */
 export async function pendingBriefs(limit: number): Promise<string[]> {
   const rows = await sql<{ article_id: string }[]>`
     WITH sel AS (
-      SELECT p.article_id, a.revision, s.tier, p.published_at,
+      SELECT p.article_id, a.revision, p.score, p.published_at,
              (p.title || ' ' || coalesce(p.summary, '')) AS text
       FROM publications p
       JOIN articles a ON a.id = p.article_id
-      JOIN sources s ON s.id = a.source_id
       WHERE p.visibility = 'public' AND p.selected
+        AND p.score >= ${SCORE_FLOOR}
         AND p.published_at > now() - ${`${WINDOW_DAYS} days`}::interval
         AND NOT EXISTS (
           SELECT 1 FROM vuln_brief b WHERE b.article_id = p.article_id AND b.revision = a.revision
         )
-    ), hits AS (
-      SELECT sel.*, upper(m[1]) AS cve
+    ), cves AS (
+      SELECT DISTINCT sel.article_id, upper(m[1]) AS cve
       FROM sel, regexp_matches(sel.text, 'CVE-[0-9]{4}-[0-9]{4,7}', 'g') AS m
-    ), picked AS (
-      SELECT DISTINCT ON (hits.article_id)
-             hits.article_id, hits.tier, hits.published_at, hits.text,
-             sig.cvss, sig.epss, sig.in_kev, rc.total AS repo_total
-      FROM hits
-      LEFT JOIN cve_risk_signals sig ON sig.cve_id = hits.cve
-      LEFT JOIN cve_repo_counts rc ON rc.cve_id = hits.cve
-      ORDER BY hits.article_id, coalesce(sig.in_kev, false) DESC, coalesce(sig.epss, 0) DESC
+    ), scored AS (
+      SELECT sel.article_id, sel.score, sel.published_at,
+             bool_or(coalesce(sig.in_kev, false)) AS in_kev,
+             max(coalesce(sig.epss, 0)) AS epss,
+             max(coalesce(rc.total, 0)) AS repo_total
+      FROM sel
+      JOIN cves ON cves.article_id = sel.article_id
+      LEFT JOIN cve_risk_signals sig ON sig.cve_id = cves.cve
+      LEFT JOIN cve_repo_counts rc ON rc.cve_id = cves.cve
+      GROUP BY sel.article_id, sel.score, sel.published_at
     )
-    SELECT article_id FROM picked
-    WHERE coalesce(in_kev, false)
-       OR coalesce(epss, 0) >= ${EPSS_FLOOR}
-       OR coalesce(repo_total, 0) > 0
-       OR (tier = 'T1' AND coalesce(cvss, 0) >= ${CVSS_FLOOR})
-       OR EXISTS (SELECT 1 FROM unnest(${WATCH}::text[]) AS w(term) WHERE picked.text ILIKE '%' || w.term || '%')
-    ORDER BY published_at DESC NULLS LAST
+    SELECT article_id FROM scored
+    ORDER BY in_kev DESC, epss DESC, repo_total DESC, score DESC NULLS LAST, published_at DESC NULLS LAST
     LIMIT ${limit}`;
   return rows.map((r) => r.article_id);
 }
@@ -153,7 +143,7 @@ export async function composeBrief(articleId: string): Promise<"ok" | "skipped">
     model,
     purpose: "brief",
     subject: `article:${row.article_id}@${row.revision}`,
-    promptVersion: "vuln-brief-1",
+    promptVersion: "vuln-brief-2",
     system: BRIEF_SYSTEM,
     user: briefUser({
       title: row.title,
@@ -175,7 +165,7 @@ export async function composeBrief(articleId: string): Promise<"ok" | "skipped">
     }),
     schema: BriefSchema,
     temperature: 0.3,
-    maxTokens: 3000,
+    maxTokens: 3200,
   });
 
   const facts = {
@@ -211,7 +201,7 @@ export const vulnBriefServer = defineServerModule({
   schedules: [
     {
       name: "vuln-brief.enqueue",
-      cron: "*/10 * * * *",
+      cron: "*/5 * * * *",
       run: async () => {
         const made = await madeToday();
         if (made >= MAX_PER_DAY) return { enqueued: 0, madeToday: made, capped: true };

@@ -1807,6 +1807,132 @@
       ],
       "site_fulltext": false,
       "syndicate_fulltext": false
+    },
+    {
+      "id": "x-vxunderground",
+      "name": "X：vx-underground (@vxunderground)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:vxunderground -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-watchtowr",
+      "name": "X：watchTowr Labs (@watchtowr)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:watchtowr -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-projectdiscovery",
+      "name": "X：ProjectDiscovery (@projectdiscovery)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:projectdiscovery -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-malwrhunterteam",
+      "name": "X：MalwareHunterTeam (@malwrhunterteam)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:malwrhunterteam -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-campuscodi",
+      "name": "X：Catalin Cimpanu (@campuscodi)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:campuscodi -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
+    },
+    {
+      "id": "x-shadowserver",
+      "name": "X：ShadowServer (@ShadowServer)",
+      "kind": "x_search",
+      "config": {
+        "query": "from:ShadowServer -filter:replies",
+        "searchType": "Latest",
+        "publisherRole": "person"
+      },
+      "tier": "T1_5",
+      "owner_entity_id": null,
+      "participation_mode": "editorial",
+      "interval_minutes": 60,
+      "tags": [
+        "X",
+        "待填 SOCIALDATA_API_KEY"
+      ],
+      "site_fulltext": false,
+      "syndicate_fulltext": false,
+      "enabled": false
     }
   ]
 }

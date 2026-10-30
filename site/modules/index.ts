@@ -4,7 +4,6 @@
 import type { ModuleDeclaration } from "@aihot/contracts/modules";
 import { vulnBrief } from "@aihot/vuln-brief";
 import { vulnhotThemes } from "@aihot/vulnhot-themes";
-import { vulnPerspective } from "@aihot/vuln-perspective";
 import { vulnSignals } from "@aihot/vuln-signals";
 
-export const MODULES: readonly ModuleDeclaration[] = [vulnhotThemes, vulnPerspective, vulnSignals, vulnBrief];
+export const MODULES: readonly ModuleDeclaration[] = [vulnhotThemes, vulnSignals, vulnBrief];

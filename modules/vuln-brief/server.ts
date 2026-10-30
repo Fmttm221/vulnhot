@@ -1,10 +1,10 @@
-// 漏洞精读的后端（modules/vuln-brief）：定时挑出"值得精读"的精选，把本条正文 + 客观信号 +
+// 精读的后端（modules/vuln-brief）：定时挑出还没写精读的新精选，把本条正文 + 客观信号 +
 // 同一事件的其他报道拼成材料，排队调用一次模型，写出一篇连贯的短文 + 自查 + 处置。
 // 语料、回执与预算都走引擎的 providers（chatJson 内含回执与熔断），本模块只管自己的表与接口。
 //
 // 三条纪律：
-// 1. 不是每条精选都精读：只给带 CVE 编号、且精选评分达到 SCORE_FLOOR 的条目写，一天还有总量上限；
-//    排队时进 KEV、EPSS 高、有公开 PoC 的先写。
+// 1. 每条**新入选**的精选都写精读（不限于漏洞，被投毒、泄露这类事件同样要写）；入库超过 WINDOW_HOURS
+//    的旧条目不再补——那是改版前的存量，不花钱。
 // 2. 只服务已公开的精选，与公开页面同一口径；撤销或更正后接口立刻不再返回。
 // 3. 页面只读自己的表，不在读者打开页面时联网。
 import { z } from "zod";
@@ -17,13 +17,11 @@ import { modelFor } from "@aihot/backend/editorial/models";
 import { BRIEF_SYSTEM, briefUser, type SiblingReport } from "./prompt.ts";
 
 /** 一次最多补几条：控制单次运行的花费，也让新精选先出现。 */
-const PER_RUN = 3;
-/** 一天最多生成几条精读：这就是这个模块的预算闸门，超了等明天。 */
-const MAX_PER_DAY = 50;
-/** 只补最近这么多天的精选：更老的是首次导入的存量，不再为它付费。 */
-const WINDOW_DAYS = 30;
-/** 门槛：精选评分达到这个分才写精读（评分是 0–100）。 */
-const SCORE_FLOOR = 60;
+const PER_RUN = 4;
+/** 一天最多生成几条精读：这就是这个模块的预算闸门，超了等明天（一天入选 60–115 条，够用）。 */
+const MAX_PER_DAY = 150;
+/** 只补最近这么多小时内入选的精选：更早的是存量，不再为它付费（也挡住了停机超过半天的补写）。 */
+const WINDOW_HOURS = 12;
 
 const CVE_RE = /CVE-\d{4}-\d{4,7}/g;
 
@@ -59,7 +57,7 @@ async function madeToday(): Promise<number> {
 }
 
 /**
- * 还要写精读的精选：带 CVE 编号、精选评分达到 SCORE_FLOOR、最近 WINDOW_DAYS 天内、还没写过（或分析已更新）。
+ * 还要写精读的精选：最近 WINDOW_HOURS 小时内入选的、还没写过（或分析已更新）的都在内，不限有没有 CVE。
  * 排队顺序：读者最可能打开的是新的，所以新的先写；同一批里评分高、进 KEV、EPSS 高的靠前。
  */
 export async function pendingBriefs(limit: number): Promise<string[]> {
@@ -70,8 +68,7 @@ export async function pendingBriefs(limit: number): Promise<string[]> {
       FROM publications p
       JOIN articles a ON a.id = p.article_id
       WHERE p.visibility = 'public' AND p.selected
-        AND p.score >= ${SCORE_FLOOR}
-        AND p.published_at > now() - ${`${WINDOW_DAYS} days`}::interval
+        AND coalesce(p.selected_ready_at, p.published_at) > now() - ${`${WINDOW_HOURS} hours`}::interval
         AND NOT EXISTS (
           SELECT 1 FROM vuln_brief b WHERE b.article_id = p.article_id AND b.revision = a.revision
         )
@@ -84,7 +81,7 @@ export async function pendingBriefs(limit: number): Promise<string[]> {
              max(coalesce(sig.epss, 0)) AS epss,
              max(coalesce(rc.total, 0)) AS repo_total
       FROM sel
-      JOIN cves ON cves.article_id = sel.article_id
+      LEFT JOIN cves ON cves.article_id = sel.article_id
       LEFT JOIN cve_risk_signals sig ON sig.cve_id = cves.cve
       LEFT JOIN cve_repo_counts rc ON rc.cve_id = cves.cve
       GROUP BY sel.article_id, sel.score, sel.published_at
@@ -142,7 +139,7 @@ export async function composeBrief(articleId: string): Promise<"ok" | "skipped">
     model,
     purpose: "brief",
     subject: `article:${row.article_id}@${row.revision}`,
-    promptVersion: "vuln-brief-3",
+    promptVersion: "vuln-brief-4",
     system: BRIEF_SYSTEM,
     user: briefUser({
       title: row.title,

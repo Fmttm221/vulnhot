@@ -1,5 +1,5 @@
 import { t as translate } from "@aihot/web/lib/i18n";
-// 文章页上的精读：一段读得懂的短文（段落之间空行，重点用 ==…== 标出来，渲染成站点主题的强调色），
+// 文章页上的精读：一段读得懂的短文（段落之间空行，重点用 ==…== 标出来，渲染成站点主题色），
 // 后面跟可执行的自查与处置。数据来自模块接口（页面打开时不联网到外部）；没有精读的条目不占版面。
 import { useEffect, useState } from "react";
 import type { SiteItemDetail } from "@aihot/contracts/site";
@@ -13,7 +13,6 @@ interface Brief {
 }
 
 const cache = new Map<string, Brief | null>();
-const CVE_RE = /CVE-\d{4}-\d{4,7}/i;
 /** 模型用 ==…== 标出来的重点。 */
 const MARK = /==([^=\n]{1,120})==/g;
 
@@ -32,7 +31,7 @@ function Prose({ text }: { text: string }) {
     <>
       {parts.map((part, index) =>
         part.mark ? (
-          <mark key={index} className="rounded-mark bg-hot-soft px-[3px] font-semibold text-hot">
+          <mark key={index} className="bg-transparent font-semibold text-accent">
             {part.text}
           </mark>
         ) : (
@@ -44,9 +43,8 @@ function Prose({ text }: { text: string }) {
 }
 
 export function BriefBlock({ item }: { item: SiteItemDetail }) {
-  const text = `${item.title} ${item.summary ?? ""}`;
-  // 只有精选里的漏洞才写精读：别的条目不查，避免每条都发一次请求。
-  const eligible = item.selected && CVE_RE.test(text);
+  // 每条精选都有精读（不只是漏洞）；非精选不发请求。没有精读的条目接口回 null，版面不占。
+  const eligible = item.selected;
   const [brief, setBrief] = useState<Brief | null>(() => cache.get(item.id) ?? null);
 
   useEffect(() => {

@@ -27,18 +27,22 @@ const SCORE_FLOOR = 60;
 
 const CVE_RE = /CVE-\d{4}-\d{4,7}/g;
 
+/** 模型偶尔写超过上限：截断一次比整条解析失败、重试三次后什么都不留下要便宜。 */
+const text = (max: number) =>
+  z.string().trim().min(1).transform((value) => (value.length > max ? `${value.slice(0, max - 1)}…` : value));
+
 const BriefSchema = z.object({
-  who: z.string().trim().min(1).max(300),
-  what: z.string().trim().min(1).max(300),
-  why: z.string().trim().min(1).max(300),
-  story: z.string().trim().min(1).max(800),
-  usage: z.string().trim().min(1).max(800),
-  impact: z.string().trim().min(1).max(800),
+  who: text(200),
+  what: text(200),
+  why: text(200),
+  story: text(600),
+  usage: text(600),
+  impact: text(600),
   // 工具或情报发布这类条目，读者没有可自查的步骤：允许留空，页面上不画这一段。
-  check: z.array(z.string().trim().min(1).max(300)).max(4).default([]),
-  action: z.array(z.string().trim().min(1).max(300)).max(4).default([]),
-  terms: z.array(z.object({ term: z.string().trim().max(60), plain: z.string().trim().max(240) })).max(6).catch([]),
-  caveats: z.array(z.string().trim().max(300)).max(3).catch([]),
+  check: z.array(text(200)).max(6).catch([]),
+  action: z.array(text(200)).max(6).catch([]),
+  terms: z.array(z.object({ term: text(80), plain: text(300) })).max(8).catch([]),
+  caveats: z.array(text(300)).max(3).catch([]),
 });
 
 interface Row {

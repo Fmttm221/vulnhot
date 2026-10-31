@@ -5,4 +5,4 @@ import { vulnhotThemesWeb } from "@aihot/vulnhot-themes/web";
 import { vulnPocsWeb } from "@aihot/vuln-pocs/web";
 import { vulnSignalsWeb } from "@aihot/vuln-signals/web";
 
-export const WEB_MODULES: readonly WebModule[] = [vulnhotThemesWeb, vulnSignalsWeb, vulnPocsWeb, vulnBriefWeb];
+export const WEB_MODULES: readonly WebModule[] = [vulnhotThemesWeb, vulnSignalsWeb, vulnBriefWeb, vulnPocsWeb];

@@ -77,6 +77,22 @@ export async function searchPocs(query: string, limit: number): Promise<Array<{ 
   return rows.map((r) => ({ cve: r.cve_id, description: r.description, poc: r.poc_count, nuclei: r.nuclei_count }));
 }
 
+/** 最近公开的利用：按公开时间倒序。搜索页在没有关键词时列这个。 */
+export async function latestPocs(limit: number): Promise<Array<{ url: string; cve: string | null; name: string; stars: number | null; released: string | null; kev: boolean }>> {
+  const rows = await sql<{ url: string; cve_id: string | null; name: string | null; stars: number | null; released: Date | null; in_kev: boolean }[]>`
+    SELECT url, cve_id, name, stars, released, in_kev
+    FROM poc_landed ORDER BY released DESC NULLS LAST LIMIT ${limit}`;
+  // 交给浏览器的永远是完整的 ISO 时间：to_char 的 +08 没有分钟，new Date() 会解析成 Invalid Date。
+  return rows.map((r) => ({
+    url: r.url,
+    cve: r.cve_id,
+    name: r.name ?? r.url,
+    stars: r.stars,
+    released: r.released?.toISOString?.() ?? null,
+    kev: r.in_kev,
+  }));
+}
+
 export const vulnPocsServer = defineServerModule({
   name: "vuln-pocs",
   schedules: [
@@ -95,6 +111,11 @@ export const vulnPocsServer = defineServerModule({
       const detail = await pocDetail(cve);
       if (!detail) return { poc: null };
       return { poc: detail };
+    });
+    app.get("/api/site/pocs/latest", async (req, reply) => {
+      const limit = Math.min(Math.max(Number((req.query as { limit?: string }).limit ?? 40) || 40, 1), 100);
+      reply.header("cache-control", "public, s-maxage=300, stale-while-revalidate=3600");
+      return { items: await latestPocs(limit) };
     });
     app.get("/api/site/pocs/search", async (req, reply) => {
       const query = String((req.query as { q?: string }).q ?? "");

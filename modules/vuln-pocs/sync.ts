@@ -125,6 +125,39 @@ export function toArtifacts(entry: IndexEntry, meta: RepoMeta): ArtifactRow[] {
   return rows;
 }
 
+/** trending_poc.json 的形状：只取 landed（最近公开的一百条）。 */
+interface Trending {
+  landed?: Array<{ cve?: string; url?: string; name?: string; stars?: number; released?: string; kev?: boolean }>;
+}
+
+export interface LandedRow {
+  url: string;
+  cve_id: string | null;
+  name: string;
+  stars: number | null;
+  released: string | null;
+  in_kev: boolean;
+}
+
+/** 最近公开的利用：只留能用的行，网址是主键。 */
+export function toLanded(trending: Trending): LandedRow[] {
+  const rows: LandedRow[] = [];
+  for (const entry of trending.landed ?? []) {
+    const url = (entry.url ?? "").trim();
+    if (!url) continue;
+    const cve = (entry.cve ?? "").trim().toUpperCase();
+    rows.push({
+      url,
+      cve_id: /^CVE-\d{4}-\d{4,}$/.test(cve) ? cve : null,
+      name: (entry.name ?? "").trim() || artifactName(url),
+      stars: typeof entry.stars === "number" ? entry.stars : null,
+      released: timeOrNull(entry.released),
+      in_kev: entry.kev === true,
+    });
+  }
+  return rows;
+}
+
 async function getJson<T>(path: string, maxBytes: number): Promise<T> {
   const res = await guardedFetch(`${BASE}/${path}`, {
     headers: { accept: "application/json", "user-agent": "VulnHOT/poc-index sync" },
@@ -175,6 +208,18 @@ export async function syncPocIndex(): Promise<{ cves: number; artifacts: number;
         poc_count = EXCLUDED.poc_count, nuclei_count = EXCLUDED.nuclei_count, msf_count = EXCLUDED.msf_count,
         edb_count = EXCLUDED.edb_count, vulhub_count = EXCLUDED.vulhub_count,
         collection_count = EXCLUDED.collection_count, synced_at = ${runAt}::timestamptz`;
+  }
+
+  // 最近公开的利用（27 KB，同一轮一起更新）：搜索页在没有输入时按时间列它。
+  try {
+    const trending = await getJson<Trending>("trending_poc.json", META_BYTES);
+    const landed = toLanded(trending);
+    if (landed.length) {
+      await sql`DELETE FROM poc_landed`;
+      await sql`INSERT INTO poc_landed ${sql(landed, "url", "cve_id", "name", "stars", "released", "in_kev")}`;
+    }
+  } catch {
+    /* 这一轮拿不到就留着上一轮的列表 */
   }
 
   for (let i = 0; i < artifacts.length; i += BATCH) {

@@ -1,8 +1,10 @@
 import { t as translate } from "@aihot/web/lib/i18n";
-// /poc：PoC 索引的搜索页。数据是模块自己同步进库的 pocindex 公开索引（83k 个有公开利用的 CVE）。
+// /poc：PoC 索引。默认列最近公开的利用（按时间倒序，和 pocindex 首页的「JUST LANDED」对应），
+// 输入关键词则按编号前缀或描述搜索。数据是模块自己同步进库的 pocindex 公开索引。
 import { Link, useLoaderData } from "react-router";
 import { apiGet, cachedPage, pageHeaders } from "@aihot/web/lib/api.server";
 import { pageMeta, siteUrl } from "@aihot/web/lib/seo";
+import { relativeTime } from "@aihot/web/lib/format";
 import { PhoneBar } from "@aihot/web/components/shell/PhoneBar";
 import type { Screen } from "@aihot/web/components/shell/screens";
 
@@ -16,12 +18,23 @@ export interface SearchHit {
   nuclei: number;
 }
 
+export interface LandedHit {
+  url: string;
+  cve: string | null;
+  name: string;
+  stars: number | null;
+  released: string | null;
+  kev: boolean;
+}
+
 export async function loader({ request }: { request: Request }) {
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim();
-  const items = q
-    ? (await apiGet<{ items: SearchHit[] }>(`/api/site/pocs/search?q=${encodeURIComponent(q)}`, { signal: request.signal })).items
-    : [];
-  return cachedPage(120, { q, items });
+  if (q) {
+    const items = (await apiGet<{ items: SearchHit[] }>(`/api/site/pocs/search?q=${encodeURIComponent(q)}`, { signal: request.signal })).items;
+    return cachedPage(120, { q, items, latest: [] as LandedHit[] });
+  }
+  const latest = (await apiGet<{ items: LandedHit[] }>("/api/site/pocs/latest?limit=40", { signal: request.signal })).items;
+  return cachedPage(120, { q, items: [] as SearchHit[], latest });
 }
 
 export function meta() {
@@ -33,7 +46,7 @@ export function meta() {
 }
 
 export default function PocIndex() {
-  const { q, items } = useLoaderData<typeof loader>();
+  const { q, items, latest } = useLoaderData<typeof loader>();
   return (
     <div className="mx-auto max-w-[var(--page-max-reading)] pb-12">
       <PhoneBar title={translate("PoC 索引")} />
@@ -80,9 +93,45 @@ export default function PocIndex() {
         </ul>
       )}
 
+      {!q && latest.length > 0 && (
+        <>
+          <div className="mt-7 flex flex-wrap items-baseline justify-between gap-2">
+            <div className="text-[12px] font-semibold text-ink-3">{translate("最近公开的利用")}</div>
+            <div className="text-[11.5px] text-ink-4">{translate("按公开时间倒序")}</div>
+          </div>
+          <ul className="mt-2 divide-y divide-line-soft border-t border-line-soft">
+            {latest.map((entry) => (
+              <li key={entry.url} className="py-2.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      <a href={entry.url} target="_blank" rel="noopener noreferrer" className="mono min-w-0 truncate text-[13.5px] font-semibold text-ink transition-colors hover:text-accent">
+                        {entry.name}
+                      </a>
+                      {entry.stars !== null && entry.stars > 0 && <span className="shrink-0 text-[11.5px] text-ink-4">{entry.stars}★</span>}
+                      {entry.kev && <span className="chip shrink-0 text-hot">KEV</span>}
+                    </div>
+                    {entry.cve && entry.cve !== entry.name && (
+                      <Link viewTransition to={`/poc/${entry.cve}`} className="mono mt-0.5 inline-block text-[12px] text-ink-3 transition-colors hover:text-accent">
+                        {entry.cve}
+                      </Link>
+                    )}
+                  </div>
+                  {entry.released && (
+                    <time dateTime={entry.released} suppressHydrationWarning className="shrink-0 text-[11.5px] text-ink-4">
+                      {relativeTime(entry.released)}
+                    </time>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       {!q && (
         <p className="mt-6 text-[12.5px] leading-relaxed text-ink-4">
-          {translate("索引里只有「有公开利用」的编号；页面按公开利用条目多少排序。")}
+          {translate("索引里只有「有公开利用」的编号；搜索时按公开利用条目多少排序。")}
           {" "}
           <span className="mono">{siteUrl()}/poc/CVE-2021-44228</span>
         </p>

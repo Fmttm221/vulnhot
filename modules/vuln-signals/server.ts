@@ -1,10 +1,10 @@
-// 客观风险信号的后端：从 NVD 取 CVSS、从 FIRST 取 EPSS、从 CISA 取 KEV，从 GitHub 数 PoC 仓库；
+// 客观风险信号的后端：从 NVD 取 CVSS、从 FIRST 取 EPSS、从 CISA 取 KEV；PoC 条目数不再自己数
+// （GitHub 搜索有速率限制、也只覆盖 GitHub 一家），改由 vuln-pocs 模块同步的公开索引提供。
 // 再把一条资讯需要的所有信号与它的进展时间线合成一个接口给文章页用。
 //
 // 三条纪律：
 // 1. 只抓我们自己收录过的 CVE（从 publications 的标题与摘要里抽编号），不为全库付代价。
-// 2. 三个来源各有自己的节奏与请求间隔：NVD 未认证 5 次/30 秒、GitHub 搜索未认证 10 次/分钟，
-//    所以一次只补一小批，剩下的下一轮再补。
+// 2. 每个来源各有自己的节奏与请求间隔：NVD 未认证 5 次/30 秒，所以一次只补一小批，剩下的下一轮再补。
 // 3. 抓到的都是外部数据，写进自己的表；页面只读表，不在读者打开页面时联网。
 import type { FastifyInstance } from "fastify";
 import { defineServerModule } from "@aihot/backend/modules";
@@ -108,44 +108,6 @@ export async function syncCvss(perRun = 18): Promise<number> {
   return done;
 }
 
-// ── GitHub：这个编号一共有多少个仓库（total_count），顺带存前 3 个 ─────────────────────────
-export async function syncRepoCounts(perRun = 12): Promise<number> {
-  const rows = await sql<{ cve_id: string }[]>`
-    SELECT cve_id FROM cve_repo_counts
-    WHERE github_fetched_at < now() - interval '3 days'
-    UNION
-    SELECT s.cve_id FROM cve_risk_signals s LEFT JOIN cve_repo_counts c ON c.cve_id = s.cve_id
-    WHERE c.cve_id IS NULL
-    LIMIT ${perRun}`;
-  const token = process.env.GITHUB_TOKEN?.trim();
-  const gap = token ? 2_500 : 6_500;
-  let done = 0;
-  for (const [index, row] of rows.entries()) {
-    if (index > 0) await sleep(gap);
-    try {
-      const res = await fetch(
-        `https://api.github.com/search/repositories?q=${encodeURIComponent(`${row.cve_id} in:name,description,readme`)}&sort=stars&order=desc&per_page=3`,
-        {
-          headers: { "user-agent": UA, accept: "application/vnd.github+json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
-          signal: AbortSignal.timeout(20_000),
-        },
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = (await res.json()) as { total_count?: number; items?: Array<{ full_name: string; html_url: string; stargazers_count: number }> };
-      const sample = (body.items ?? []).map((r) => ({ name: r.full_name, url: r.html_url, stars: r.stargazers_count }));
-      await sql`INSERT INTO cve_repo_counts (cve_id, total, sample, github_fetched_at)
-                VALUES (${row.cve_id}, ${body.total_count ?? 0}, ${sql.json(sample as never)}, now())
-                ON CONFLICT (cve_id) DO UPDATE SET total = EXCLUDED.total, sample = EXCLUDED.sample, github_fetched_at = now()`;
-      done += 1;
-    } catch {
-      await sql`INSERT INTO cve_repo_counts (cve_id, total, sample, github_fetched_at)
-                VALUES (${row.cve_id}, 0, '[]'::jsonb, now())
-                ON CONFLICT (cve_id) DO UPDATE SET github_fetched_at = now()`;
-    }
-  }
-  return done;
-}
-
 // ── 文章页要的一份合成数据 ────────────────────────────────────────────────────────────────
 interface ItemRow {
   article_id: string;
@@ -199,11 +161,6 @@ export const vulnSignalsServer = defineServerModule({
       cron: "*/10 * * * *",
       run: async () => ({ cvss: await syncCvss() }),
     },
-    {
-      name: "vuln-signals.poc",
-      cron: "*/15 * * * *",
-      run: async () => ({ repos: await syncRepoCounts() }),
-    },
   ],
   http: (app: FastifyInstance) => {
     app.get("/api/site/signals/:id", async (req, reply) => {
@@ -224,10 +181,26 @@ export const vulnSignalsServer = defineServerModule({
         signals = await sql<SignalRow[]>`
           SELECT s.cve_id, s.cvss::float8 AS cvss, s.cvss_vector, s.epss::float8 AS epss, s.epss_percentile::float8 AS epss_percentile,
                  s.in_kev, to_char(s.kev_due_date, 'YYYY-MM-DD') AS kev_due_date,
-                 c.total AS repo_total, c.sample AS repo_sample
+                 null::int AS repo_total, null::jsonb AS repo_sample
           FROM cve_risk_signals s
-          LEFT JOIN cve_repo_counts c ON c.cve_id = s.cve_id
           WHERE s.cve_id IN ${sql(cves)}`;
+        // 公开利用条目由 vuln-pocs 模块同步（可选模块：没装就没有这一段，文章页也就不显示）。
+        try {
+          const pocs = await sql<{ cve_id: string; total: number; sample: SignalRow["repo_sample"] }[]>`
+            SELECT p.cve_id, p.poc_count AS total,
+                   (SELECT json_agg(x ORDER BY x.stars DESC NULLS LAST, x.url)
+                    FROM (SELECT name, url, stars FROM poc_artifact
+                          WHERE cve_id = p.cve_id AND kind = 'poc'
+                          ORDER BY stars DESC NULLS LAST, url LIMIT 3) x) AS sample
+            FROM poc_cve p WHERE p.cve_id IN ${sql(cves)}`;
+          const byCve = new Map(pocs.map((p) => [p.cve_id, p]));
+          signals = signals.map((s) => {
+            const poc = byCve.get(s.cve_id);
+            return poc ? { ...s, repo_total: poc.total, repo_sample: poc.sample } : s;
+          });
+        } catch {
+          /* 没装 vuln-pocs 就只有 CVSS/EPSS/KEV */
+        }
       }
 
       // 同一次发生（同一个 fact）下已经公开的报道，就是这条的进展时间线。

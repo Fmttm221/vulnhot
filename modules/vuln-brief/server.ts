@@ -79,11 +79,11 @@ export async function pendingBriefs(limit: number): Promise<string[]> {
       SELECT sel.article_id, sel.score, sel.published_at,
              bool_or(coalesce(sig.in_kev, false)) AS in_kev,
              max(coalesce(sig.epss, 0)) AS epss,
-             max(coalesce(rc.total, 0)) AS repo_total
+             max(coalesce(rc.poc_count, 0)) AS repo_total
       FROM sel
       LEFT JOIN cves ON cves.article_id = sel.article_id
       LEFT JOIN cve_risk_signals sig ON sig.cve_id = cves.cve
-      LEFT JOIN cve_repo_counts rc ON rc.cve_id = cves.cve
+      LEFT JOIN poc_cve rc ON rc.cve_id = cves.cve
       GROUP BY sel.article_id, sel.score, sel.published_at
     )
     SELECT article_id FROM scored
@@ -127,8 +127,12 @@ export async function composeBrief(articleId: string): Promise<"ok" | "skipped">
   const cves = [...new Set(`${row.title} ${row.summary ?? ""}`.match(CVE_RE) ?? [])].map((c) => c.toUpperCase());
   const [sig] = cves.length
     ? await sql<{ cvss: string | null; epss: string | null; in_kev: boolean | null; kev_due_date: Date | null; total: number | null; sample: Array<{ name?: string }> | null }[]>`
-        SELECT sig.cvss, sig.epss, sig.in_kev, sig.kev_due_date, rc.total, rc.sample
-        FROM cve_risk_signals sig FULL JOIN cve_repo_counts rc ON rc.cve_id = sig.cve_id
+        SELECT sig.cvss, sig.epss, sig.in_kev, sig.kev_due_date, rc.poc_count AS total,
+               (SELECT json_agg(x ORDER BY x.stars DESC NULLS LAST)
+                FROM (SELECT name, url, stars FROM poc_artifact
+                      WHERE cve_id = ANY(${cves}) AND kind = 'poc'
+                      ORDER BY stars DESC NULLS LAST, url LIMIT 3) x) AS sample
+        FROM cve_risk_signals sig FULL JOIN poc_cve rc ON rc.cve_id = sig.cve_id
         WHERE sig.cve_id = ANY(${cves}) OR rc.cve_id = ANY(${cves})
         ORDER BY coalesce(sig.in_kev, false) DESC, coalesce(sig.epss, 0) DESC
         LIMIT 1`

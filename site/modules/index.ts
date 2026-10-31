@@ -3,7 +3,8 @@
 // pages' parts. Each list keeps the order its entries appear in on the site.
 import type { ModuleDeclaration } from "@aihot/contracts/modules";
 import { vulnBrief } from "@aihot/vuln-brief";
+import { vulnPocs } from "@aihot/vuln-pocs";
 import { vulnhotThemes } from "@aihot/vulnhot-themes";
 import { vulnSignals } from "@aihot/vuln-signals";
 
-export const MODULES: readonly ModuleDeclaration[] = [vulnhotThemes, vulnSignals, vulnBrief];
+export const MODULES: readonly ModuleDeclaration[] = [vulnhotThemes, vulnSignals, vulnPocs, vulnBrief];

@@ -295,7 +295,6 @@ export const DEPLOYMENT = {
     "api.anquanke.com",
     "api.github.com",
     "api.msrc.microsoft.com",
-    "arstechnica.com",
     "blog.assetnote.io",
     "blog.cloudflare.com",
     "blog.exodusintel.com",

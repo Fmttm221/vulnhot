@@ -924,7 +924,7 @@
       "name": "SonarSource 安全研究",
       "kind": "rss",
       "config": {
-        "feedUrl": "https://www.sonarsource.com/blog/rss.xml",
+        "feedUrl": "https://www.sonarsource.com/rss/blog.xml",
         "_aihot": {
           "initialBackfillLimit": 8
         }
@@ -1472,6 +1472,7 @@
       "tier": "T2",
       "owner_entity_id": null,
       "participation_mode": "editorial",
+      "enabled": false,
       "interval_minutes": 180,
       "tags": [
         "中文",
